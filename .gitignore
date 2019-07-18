@@ -14,8 +14,8 @@ GTAGS
 cscope.*
 out/
 tags
-./Android.mk
-./CMakeLists.txt
-./CMakeToolchain.txt
-./LISENSE
-./Makefile
+Android.mk
+CMakeLists.txt
+CMakeToolchain.txt
+LICENSE
+Makefile
