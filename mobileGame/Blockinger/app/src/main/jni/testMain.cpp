@@ -828,9 +828,11 @@ int TZMON_TimerSync(JNIEnv *env)
     char temp[32] = { 0x00, };
     char preToken[32] = { 0x00, };
 
+    unsigned char cMsg[32] = { 0x00, };
+
     double aTimeGap[3] = { 0.0, 0.0, 0.0 };
 
-    int outLen, argLen, preTokenLen, tempLen;
+    int outLen, argLen, preTokenLen, tempLen, cMsgLen;
 
     getCurrentTime(env, aTimeGap);
     for (int i = 0; i < 3; i++) {
@@ -869,6 +871,23 @@ int TZMON_TimerSync(JNIEnv *env)
 
     tzmon_atoi(out, outLen, tToken, &tTokenLen);
     printBuf("tToken", tToken, tTokenLen);
+
+    // cMsg
+    tzmon_hmac_sha256(tToken, tTokenLen, resultMsg, 32, cMsg, &cMsgLen);
+    printBuf("cMsg", cMsg, cMsgLen);
+
+    outLen = sizeof(out);
+    argLen = sizeof(arg);
+    memset(out, 0x00, outLen);
+    memset(arg, 0x00, argLen);
+    tzmon_itoa(cMsg, cMsgLen, arg, &argLen);
+
+    strcpy(cmd, "adb shell /vendor/bin/optee_tzmon TVERIFY ");
+    strcat(cmd, arg);
+    if (_call_tzmonTA(cmd, out, &outLen) != 0) {
+        LOGD("_call_tzmonTA error: ");
+        return 1;
+    }
 
     return 0;
 }
