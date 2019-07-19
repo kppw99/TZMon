@@ -236,18 +236,27 @@ static TEEC_Result _tzmonCmd(char *cmd, uint32_t cmdLen,
 	} else if (	(memcmp(cmd, "UKEY", cmdLen) == 0) &&
 				(cmdLen == strlen("UKEY"))) {
 		*tzmonCMD = TA_TZMON_CMD_UKEY;
+	} else if (	(memcmp(cmd, "APRETOKEN", cmdLen) == 0) &&
+				(cmdLen == strlen("APRETOKEN"))) {
+		*tzmonCMD = TA_TZMON_CMD_APRETOKEN;
 	} else if (	(memcmp(cmd, "ITOKEN", cmdLen) == 0) &&
 				(cmdLen == strlen("ITOKEN"))) {
 		*tzmonCMD = TA_TZMON_CMD_ITOKEN;
 	} else if (	(memcmp(cmd, "UTOKEN", cmdLen) == 0) &&
 				(cmdLen == strlen("UTOKEN"))) {
 		*tzmonCMD = TA_TZMON_CMD_UTOKEN;
+	} else if (	(memcmp(cmd, "ATOKEN", cmdLen) == 0) &&
+				(cmdLen == strlen("ATOKEN"))) {
+		*tzmonCMD = TA_TZMON_CMD_ATOKEN;
 	} else if (	(memcmp(cmd, "IVERIFY", cmdLen) == 0) &&
 				(cmdLen == strlen("IVERIFY"))) {
 		*tzmonCMD = TA_TZMON_CMD_IVERIFY;
 	} else if (	(memcmp(cmd, "UVERIFY", cmdLen) == 0) &&
 				(cmdLen == strlen("UVERIFY"))) {
 		*tzmonCMD = TA_TZMON_CMD_UVERIFY;
+	} else if (	(memcmp(cmd, "AVERIFY", cmdLen) == 0) &&
+				(cmdLen == strlen("AVERIFY"))) {
+		*tzmonCMD = TA_TZMON_CMD_AVERIFY;
 	} else if (	(memcmp(cmd, "SHA256", cmdLen) == 0) &&
 				(cmdLen == strlen("SHA256"))) {
 		*tzmonCMD = TA_TZMON_CMD_SHA256;
@@ -420,6 +429,16 @@ static TEEC_Result parseCMD(int argc, char **argv, uint32_t *tzmonCMD)
 				break;
 			case TA_TZMON_ADMIN_CMD_ABUSING_DELETE:
 				break;
+			case TA_TZMON_CMD_APRETOKEN:
+				sharedMem.inDataLen = strlen(argv[2]);
+				memcpy(sharedMem.inData, argv[2], sharedMem.inDataLen);
+				break;
+			case TA_TZMON_CMD_ATOKEN:
+				tzmon_abusing_write((unsigned char *)argv[2],
+						sharedMem.inData, &sharedMem.inDataLen);
+				break;
+			case TA_TZMON_CMD_AVERIFY:
+				break;
 			default:
 				retVal = TEEC_ERROR_BAD_PARAMETERS;
 				break;
@@ -488,6 +507,12 @@ int main(int argc, char **argv)
 	 * TA_TZMON_CMD_IKEY is the actual function in the TA to be
 	 * called.
 	 */
+	fp = fopen(RESULT, "w+");
+	if (fp == NULL) {
+		printf("fopen is failed\n");
+		goto exit;
+	}
+
 	if (tzmonCMD != TA_TZMON_CMD_RANDOM) {
 		printBuf((uint8_t *)"InputData", sharedMem.inData, sharedMem.inDataLen);
 	}
@@ -499,15 +524,9 @@ int main(int argc, char **argv)
 				sharedMem.outData, &sharedMem.outDataLen);
 	}
 
-	fp = fopen(RESULT, "w+");
-	if (fp == NULL) {
-		printf("fopen is failed\n");
-		goto exit;
-	}
-
 	if (res != TEEC_SUCCESS) {
-		printBuf((uint8_t *)"For debug", sharedMem.inData,
-				sharedMem.inDataLen);
+		printBuf((uint8_t *)"For debug", sharedMem.outData,
+				sharedMem.outDataLen);
 
 		fwrite("fail", 1, strlen("fail"), fp);
 		fclose(fp);
@@ -528,8 +547,6 @@ int main(int argc, char **argv)
 	printf("%s(%d)\n", result, resultLen);
 	fwrite(result, 1, resultLen + 1, fp);
 
-	fclose(fp);
-
 	/*
 	 * We're done with the TA, close the session and
 	 * destroy the context.
@@ -538,6 +555,8 @@ int main(int argc, char **argv)
 	 * session is closed.
 	 */
 exit:
+	fclose(fp);
+
 	TEEC_CloseSession(&sess);
 
 	TEEC_FinalizeContext(&ctx);
