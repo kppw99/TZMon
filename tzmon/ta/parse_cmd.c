@@ -1,5 +1,6 @@
 #include "parse_cmd.h"
 
+#include <stdio.h>
 #include <string.h>
 
 #include "tzmon_ta.h"
@@ -27,6 +28,12 @@
 #define APREFLAG_NAME	"aPreFlag"
 #define ATOKEN_NAME		"aToken"
 #define AFLAG_NAME		"aFlag"
+
+#define TPREFLAG_NAME	"tPreFlag"
+#define TTOKEN_NAME		"tToken"
+#define TFLAG_NAME		"tFlag"
+
+#define DELAY			(125)	// 125 millisec --> 0.125 sec.
 
 #if (USE_TEST_DATA)
 static uint8_t fileName[8 + 1] = {
@@ -697,25 +704,20 @@ static TEE_Result _aPreToken(SharedMem *sharedMem, uint8_t *outData, uint32_t *o
 	if (retVal == TEE_ERROR_ITEM_NOT_FOUND) {
 		memcpy(outData, inData, inDataLen);
 		*outDataLen = inDataLen;
-
-		retVal = TZMON_WriteFile((uint8_t *)APREFLAG_NAME,
-				(uint32_t)strlen(APREFLAG_NAME), aPreFlag, aPreFlagLen);
-		CHECK(retVal, "TZMON_WriteFile", return retVal;);
-
-		return retVal;
+		return TEE_SUCCESS;
 	} else {
 		CHECK(retVal, "TZMON_ReadFile", return retVal;);
 	}
 
 	if (strstr((const char *)outData, (const char *)inData) != NULL) {
+		retVal = TZMON_WriteFile((uint8_t *)APREFLAG_NAME,
+				(uint32_t)strlen(APREFLAG_NAME), aPreFlag, aPreFlagLen);
+		CHECK(retVal, "TZMON_WriteFile", return retVal;);
 		retVal = TEE_ERROR_GENERIC;
 	} else {
 		memcpy(outData, inData, inDataLen);
 		*outDataLen = inDataLen;
-
-		retVal = TZMON_WriteFile((uint8_t *)APREFLAG_NAME,
-				(uint32_t)strlen(APREFLAG_NAME), aPreFlag, aPreFlagLen);
-		CHECK(retVal, "TZMON_WriteFile", return retVal;);
+		retVal = TEE_SUCCESS;
 	}
 
 	return retVal;
@@ -727,15 +729,25 @@ static TEE_Result _aToken(SharedMem *sharedMem, uint8_t *outData, uint32_t *outD
 
 	TEE_Result retVal;
 
+	uint8_t aPreFlag[2] = { 0x0,0 };
 	uint8_t preToken[32] = { 0x00, };
 	
 	uint32_t saltLen = sizeof(salt);
 	uint32_t iTokenLen = sizeof(iToken);
 	uint32_t uTokenLen = sizeof(uToken);
 	uint32_t preTokenLen = sizeof(preToken);
+	uint32_t aPreFlagLen = sizeof(aPreFlag);
 
 	uint8_t *inData = sharedMem->inData;
 	uint32_t inDataLen = sharedMem->inDataLen;
+
+	retVal = TZMON_ReadFile((uint8_t *)APREFLAG_NAME,
+			(uint32_t)strlen(APREFLAG_NAME), aPreFlag, &aPreFlagLen);
+	if (retVal != TEE_ERROR_ITEM_NOT_FOUND) {
+		outData[0] = 0x01;
+		*outDataLen = 0x01;
+		return TEE_ERROR_GENERIC;
+	}
 
 	retVal = TZMON_ReadFile((uint8_t *)ITOKEN_NAME,
 			(uint32_t)strlen(ITOKEN_NAME), iToken, &iTokenLen);
@@ -810,6 +822,49 @@ static TEE_Result _aVerify(SharedMem *sharedMem, uint8_t *outData, uint32_t *out
 	return retVal;
 }
 
+static TEE_Result _tPreToken(SharedMem *sharedMem, uint8_t *outData, uint32_t *outDataLen)
+{
+	if (sharedMem == NULL) return TEE_ERROR_BAD_PARAMETERS;
+
+	TEE_Result retVal;
+	TEE_Time start, end;
+	
+	uint8_t tPreFlag[2] = { 0x01, 0x00 };
+	uint32_t tPreFlagLen = strlen((const char *)tPreFlag);
+
+	double gap, delay, overhead;
+	double tGap = sharedMem->tGap;
+	double millisec = 1000.0;
+
+	TEE_GetSystemTime(&start);
+	TEE_Wait(DELAY);
+	TEE_GetSystemTime(&end);
+
+	overhead = 1.0;
+	gap = ((double)end.millis - (double)start.millis) / millisec;
+
+	delay = (tGap >= gap) ? (tGap - gap) : (gap - tGap);
+	
+	if (delay <= overhead) {
+		outData[0] = 0x00;
+		*outDataLen = 0x01;
+		retVal = TEE_SUCCESS;
+	} else {
+		outData[0] = 0x01;
+		*outDataLen = 0x01;
+
+		retVal = TZMON_WriteFile((uint8_t *)TPREFLAG_NAME,
+				(uint32_t)strlen(TPREFLAG_NAME), tPreFlag, tPreFlagLen);
+		CHECK(retVal, "TZMON_WriteFile", return retVal;);
+
+		retVal = TEE_ERROR_TIME_NEEDS_RESET;
+	}
+
+	sharedMem->tGap = delay;
+
+	return retVal;
+}
+
 TEE_Result TZMON_ParseCMD(uint32_t cmdID, TEE_Param params[4])
 {
 	TEE_Result retVal;
@@ -872,6 +927,36 @@ TEE_Result TZMON_ParseCMD(uint32_t cmdID, TEE_Param params[4])
 		{
 			retVal = _aVerify(sharedMem, outData, outDataLen);
 			CHECK(retVal, "_aVerify", return retVal;);
+			break;
+		}
+		case TA_TZMON_CMD_TPRETOKEN:
+		{
+			retVal = _tPreToken(sharedMem, outData, outDataLen);
+			CHECK(retVal, "_tPreToken", return retVal;);
+			break;
+		}
+		case TA_TZMON_CMD_TTOKEN:
+		{
+#if 0
+			retVal = _tToken(sharedMem, outData, outDataLen);
+			CHECK(retVal, "_aToken", return retVal;);
+#else
+			outData[0] = 0x00;
+			*outDataLen = 0x01;
+			retVal = TEE_SUCCESS;
+#endif
+			break;
+		}
+		case TA_TZMON_CMD_TVERIFY:
+		{
+#if 0
+			retVal = _tVerify(sharedMem, outData, outDataLen);
+			CHECK(retVal, "_aVerify", return retVal;);
+#else
+			outData[0] = 0x00;
+			*outDataLen = 0x01;
+			retVal = TEE_SUCCESS;
+#endif
 			break;
 		}
 		case TA_TZMON_CMD_SHA256:

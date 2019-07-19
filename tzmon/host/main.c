@@ -239,6 +239,9 @@ static TEEC_Result _tzmonCmd(char *cmd, uint32_t cmdLen,
 	} else if (	(memcmp(cmd, "APRETOKEN", cmdLen) == 0) &&
 				(cmdLen == strlen("APRETOKEN"))) {
 		*tzmonCMD = TA_TZMON_CMD_APRETOKEN;
+	} else if (	(memcmp(cmd, "TPRETOKEN", cmdLen) == 0) &&
+				(cmdLen == strlen("TPRETOKEN"))) {
+		*tzmonCMD = TA_TZMON_CMD_TPRETOKEN;
 	} else if (	(memcmp(cmd, "ITOKEN", cmdLen) == 0) &&
 				(cmdLen == strlen("ITOKEN"))) {
 		*tzmonCMD = TA_TZMON_CMD_ITOKEN;
@@ -248,6 +251,9 @@ static TEEC_Result _tzmonCmd(char *cmd, uint32_t cmdLen,
 	} else if (	(memcmp(cmd, "ATOKEN", cmdLen) == 0) &&
 				(cmdLen == strlen("ATOKEN"))) {
 		*tzmonCMD = TA_TZMON_CMD_ATOKEN;
+	} else if (	(memcmp(cmd, "TTOKEN", cmdLen) == 0) &&
+				(cmdLen == strlen("TTOKEN"))) {
+		*tzmonCMD = TA_TZMON_CMD_TTOKEN;
 	} else if (	(memcmp(cmd, "IVERIFY", cmdLen) == 0) &&
 				(cmdLen == strlen("IVERIFY"))) {
 		*tzmonCMD = TA_TZMON_CMD_IVERIFY;
@@ -257,6 +263,9 @@ static TEEC_Result _tzmonCmd(char *cmd, uint32_t cmdLen,
 	} else if (	(memcmp(cmd, "AVERIFY", cmdLen) == 0) &&
 				(cmdLen == strlen("AVERIFY"))) {
 		*tzmonCMD = TA_TZMON_CMD_AVERIFY;
+	} else if (	(memcmp(cmd, "TVERIFY", cmdLen) == 0) &&
+				(cmdLen == strlen("TVERIFY"))) {
+		*tzmonCMD = TA_TZMON_CMD_TVERIFY;
 	} else if (	(memcmp(cmd, "SHA256", cmdLen) == 0) &&
 				(cmdLen == strlen("SHA256"))) {
 		*tzmonCMD = TA_TZMON_CMD_SHA256;
@@ -441,6 +450,13 @@ static TEEC_Result parseCMD(int argc, char **argv, uint32_t *tzmonCMD)
 				tzmon_atoi((unsigned char *)argv[2], strlen(argv[2]),
 						sharedMem.inData, &sharedMem.inDataLen);
 				break;
+			case TA_TZMON_CMD_TPRETOKEN:
+				sharedMem.tGap = atof(argv[2]);
+				break;
+			case TA_TZMON_CMD_TTOKEN:
+				break;
+			case TA_TZMON_CMD_TVERIFY:
+				break;
 			default:
 				retVal = TEEC_ERROR_BAD_PARAMETERS;
 				break;
@@ -524,6 +540,10 @@ int main(int argc, char **argv)
 	} else {
 		res = _connectServer(sharedMem.inData, sharedMem.inDataLen, 
 				sharedMem.outData, &sharedMem.outDataLen);
+	}
+
+	if (tzmonCMD == TA_TZMON_CMD_TPRETOKEN) {
+		printf("delay: %0.4f\n", sharedMem.tGap);
 	}
 
 	if (res != TEEC_SUCCESS) {

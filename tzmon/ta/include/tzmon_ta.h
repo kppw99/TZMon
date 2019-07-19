@@ -59,6 +59,10 @@
 #define TA_TZMON_CMD_ATOKEN			(0x52)
 #define TA_TZMON_CMD_AVERIFY		(0x53)
 
+#define TA_TZMON_CMD_TPRETOKEN		(0x61)
+#define TA_TZMON_CMD_TTOKEN			(0x62)
+#define TA_TZMON_CMD_TVERIFY		(0x63)
+
 #define TA_TZMON_CMD_INIT_FLAG				(0x00)
 #define TA_TZMON_ADMIN_CMD_MKEY_WRITE		(0x01)
 #define TA_TZMON_ADMIN_CMD_MKEY_READ		(0x02)
@@ -72,12 +76,13 @@
 #define IV_SIZE		(16 + 1)
 
 typedef struct _sharedMem {
-	uint8_t inData[DATA_SIZE];
-	uint32_t inDataLen;
-	uint8_t iv[IV_SIZE];
-	uint32_t ivLen;
-	uint8_t outData[DATA_SIZE];
-	uint32_t outDataLen;
+	uint8_t		inData[DATA_SIZE];
+	uint32_t	inDataLen;
+	uint8_t		iv[IV_SIZE];
+	uint32_t	ivLen;
+	uint8_t		outData[DATA_SIZE];
+	uint32_t	outDataLen;
+	double		tGap;
 }SharedMem;
 
 #endif /*TA_TZMON_H*/
