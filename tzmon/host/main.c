@@ -454,6 +454,8 @@ static TEEC_Result parseCMD(int argc, char **argv, uint32_t *tzmonCMD)
 				sharedMem.tGap = atof(argv[2]);
 				break;
 			case TA_TZMON_CMD_TTOKEN:
+				tzmon_atoi((unsigned char *)argv[2], strlen(argv[2]),
+						sharedMem.inData, &sharedMem.inDataLen);
 				break;
 			case TA_TZMON_CMD_TVERIFY:
 				break;
