@@ -71,6 +71,7 @@ static uint8_t salt[32] = { 0x00, };
 
 static uint8_t iToken[32] = { 0x00, };
 static uint8_t uToken[32] = { 0x00, };
+static uint8_t aToken[32] = { 0x00, };
 
 static TEE_Result _test_sha256(SharedMem *sharedMem, uint8_t *outData, uint32_t *outDataLen)
 {
@@ -748,7 +749,8 @@ static TEE_Result _aToken(SharedMem *sharedMem, uint8_t *outData, uint32_t *outD
 			preToken, preTokenLen);
 	CHECK(retVal, "TZMON_XOR", return retVal;);
 
-	if (strncmp((const char *)preToken, (const char *)inData, inDataLen) != 0x00) {
+	if (preTokenLen != inDataLen || 
+			strncmp((const char *)preToken, (const char *)inData, inDataLen) != 0x00) {
 		memcpy(outData, preToken, preTokenLen);
 		*outDataLen = preTokenLen;
 		return TEE_ERROR_GENERIC;
@@ -764,6 +766,46 @@ static TEE_Result _aToken(SharedMem *sharedMem, uint8_t *outData, uint32_t *outD
 	retVal = TZMON_WriteFile((uint8_t *)ATOKEN_NAME,
 			(uint32_t)strlen(ATOKEN_NAME), outData, *outDataLen);
 	CHECK(retVal, "TZMON_WriteFile", return retVal;);
+
+	return retVal;
+}
+
+static TEE_Result _aVerify(SharedMem *sharedMem, uint8_t *outData, uint32_t *outDataLen)
+{
+	if (sharedMem == NULL) return TEE_ERROR_BAD_PARAMETERS;
+
+	TEE_Result retVal;
+
+	uint8_t mac[32] = { 0x00, };
+	uint8_t aFlag[2] = { 0x04, 0x00 };
+
+	uint32_t macLen = sizeof(mac);
+	uint32_t aTokenLen = sizeof(aToken);
+	uint32_t resultMsgLen = (uint32_t)strlen((const char*)resultMsg);
+
+	uint8_t *inData = sharedMem->inData;
+	uint32_t inDataLen = sharedMem->inDataLen;
+	uint32_t aFlagLen = strlen((const char *)aFlag);
+
+	retVal = TZMON_ReadFile((uint8_t *)ATOKEN_NAME,
+			(uint32_t)strlen(ATOKEN_NAME), aToken, &aTokenLen);
+	CHECK(retVal, "TZMON_ReadFile", return retVal;);
+
+	retVal = TZMON_HMAC_SHA256(aToken, aTokenLen, resultMsg, resultMsgLen,
+			mac, &macLen);
+	CHECK(retVal, "TZMON_HMAC_SHA256", return retVal;);
+
+	if (inDataLen != macLen || 
+			strncmp((const char *)inData, (const char *)mac, macLen) != 0x00) {
+		return TEE_ERROR_GENERIC;
+	}
+
+	retVal = TZMON_WriteFile((uint8_t *)AFLAG_NAME,
+			(uint32_t)strlen(AFLAG_NAME), aFlag, aFlagLen);
+	CHECK(retVal, "TZMON_WriteFile", return retVal;);
+
+	memcpy(outData, aFlag, aFlagLen);
+	*outDataLen = aFlagLen;
 
 	return retVal;
 }
@@ -828,7 +870,8 @@ TEE_Result TZMON_ParseCMD(uint32_t cmdID, TEE_Param params[4])
 		}
 		case TA_TZMON_CMD_AVERIFY:
 		{
-			retVal = TEE_SUCCESS;
+			retVal = _aVerify(sharedMem, outData, outDataLen);
+			CHECK(retVal, "_aVerify", return retVal;);
 			break;
 		}
 		case TA_TZMON_CMD_SHA256:

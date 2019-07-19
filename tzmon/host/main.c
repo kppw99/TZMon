@@ -434,10 +434,12 @@ static TEEC_Result parseCMD(int argc, char **argv, uint32_t *tzmonCMD)
 				memcpy(sharedMem.inData, argv[2], sharedMem.inDataLen);
 				break;
 			case TA_TZMON_CMD_ATOKEN:
-				tzmon_abusing_write((unsigned char *)argv[2],
+				tzmon_atoi((unsigned char *)argv[2], strlen(argv[2]),
 						sharedMem.inData, &sharedMem.inDataLen);
 				break;
 			case TA_TZMON_CMD_AVERIFY:
+				tzmon_atoi((unsigned char *)argv[2], strlen(argv[2]),
+						sharedMem.inData, &sharedMem.inDataLen);
 				break;
 			default:
 				retVal = TEEC_ERROR_BAD_PARAMETERS;
