@@ -90,6 +90,7 @@ int main(int argc, char **argv)
         exit(0);
     }
 
+	system("adb root");
     while(1) {
 		printf("\n[server]: wait for connection\n");
         client_sockfd = accept(server_sockfd, (struct sockaddr *)&clientaddr, &client_len);
@@ -98,7 +99,6 @@ int main(int argc, char **argv)
             exit(0);
         }
 		printf("[server]: accept %s's request\n", inet_ntoa(clientaddr.sin_addr));
-		system("adb root");
 
         while(1) {
             memset(buf, 0x00, sizeof(buf));
