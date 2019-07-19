@@ -20,3 +20,5 @@ CMakeLists.txt
 CMakeToolchain.txt
 LICENSE
 Makefile
+result.txt
+s2b_server
