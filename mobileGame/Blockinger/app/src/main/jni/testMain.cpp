@@ -543,8 +543,9 @@ int _call_tzmonTA(char *cmd, char *out, int *outLen)
 static unsigned char iToken[32] = { 0x00, };
 static unsigned char uToken[32] = { 0x00, };
 static unsigned char aToken[32] = { 0x00, };
+static unsigned char tToken[32] = { 0x00, };
 
-static int iTokenLen, uTokenLen;
+static int iTokenLen, uTokenLen, aTokenLen, tTokenLen;
 
 int _tzmon_aPreToken(JNIEnv *env, jobject context)
 {
@@ -772,7 +773,7 @@ int TZMON_AbusingDetection(JNIEnv *env, jobject context)
 
     unsigned char cMsg[32] = { 0x00, };
 
-    int outLen, argLen, preTokenLen, aTokenLen, cMsgLen;
+    int outLen, argLen, preTokenLen, cMsgLen;
 
     if (_tzmon_aPreToken(env, context) != 0) {
         LOGD("_tzmon_aPreToken error: ");
@@ -822,10 +823,14 @@ int TZMON_TimerSync(JNIEnv *env)
 {
     char cmd[1024] = { 0x00, };
     char out[1024] = { 0x00, };
+    char arg[1024] = { 0x00, };
     char tGap[10] = { 0x00, };
+    char temp[32] = { 0x00, };
+    char preToken[32] = { 0x00, };
+
     double aTimeGap[3] = { 0.0, 0.0, 0.0 };
 
-    int outLen;
+    int outLen, argLen, preTokenLen, tempLen;
 
     getCurrentTime(env, aTimeGap);
     for (int i = 0; i < 3; i++) {
@@ -842,6 +847,28 @@ int TZMON_TimerSync(JNIEnv *env)
             return 1;
         }
     }
+
+    // tToken
+    tempLen = sizeof(temp);
+    tzmon_xor((unsigned char *)iToken, 32, (unsigned char *)uToken, 32, (unsigned char *)temp, tempLen);
+    printBuf("temp", (unsigned char *)temp, tempLen);
+
+    preTokenLen = sizeof(preToken);
+    tzmon_xor((unsigned char *)temp, tempLen, (unsigned char *)aToken, 32, (unsigned char *)preToken, preTokenLen);
+    printBuf("preToken", (unsigned char *)preToken, preTokenLen);
+
+    outLen = sizeof(out);
+    memset(out, 0x00, outLen);
+    tzmon_itoa((unsigned char *)preToken, preTokenLen, arg, &argLen);
+    strcpy(cmd, "adb shell /vendor/bin/optee_tzmon TTOKEN ");
+    strcat(cmd, arg);
+    if (_call_tzmonTA(cmd, out, &outLen) != 0) {
+        LOGD("_call_tzmonTA error: ");
+        return 1;
+    }
+
+    tzmon_atoi(out, outLen, tToken, &tTokenLen);
+    printBuf("tToken", tToken, tTokenLen);
 
     return 0;
 }
