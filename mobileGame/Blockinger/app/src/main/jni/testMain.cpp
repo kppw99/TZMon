@@ -647,7 +647,6 @@ int TZMON_SecureUpdate()
     }
 
     // iVerify
-    //int tzmon_hmac_sha256(unsigned char *key, int keyLen, unsigned char *data, int dataLen, unsigned char *hmac, int *hmacLen)
     tzmon_atoi(out, outLen, temp, &tempLen);
     memcpy(encFile, temp + 2, tempLen - 2);
     encFileLen = tempLen - 2;
