@@ -542,6 +542,7 @@ int _call_tzmonTA(char *cmd, char *out, int *outLen)
 
 static unsigned char iToken[32] = { 0x00, };
 static unsigned char uToken[32] = { 0x00, };
+static unsigned char aToken[32] = { 0x00, };
 
 static int iTokenLen, uTokenLen;
 
@@ -642,7 +643,7 @@ int TZMON_SecureUpdate()
     strcpy(cmd, "adb shell /vendor/bin/optee_tzmon UTOKEN ");
     strcat(cmd, arg);
     if (_call_tzmonTA(cmd, out, &outLen) != 0) {
-        LOGD("_call_tzmonTA error: ");
+        LOGD("_call_tzmonTA error:");
         return 1;
     }
 
@@ -769,13 +770,16 @@ int TZMON_AbusingDetection(JNIEnv *env, jobject context)
     char arg[1024] = { 0x00, };
     char preToken[32] = { 0x00, };
 
-    int outLen, argLen, preTokenLen;
+    unsigned char cMsg[32] = { 0x00, };
+
+    int outLen, argLen, preTokenLen, aTokenLen, cMsgLen;
 
     if (_tzmon_aPreToken(env, context) != 0) {
         LOGD("_tzmon_aPreToken error: ");
         return 1;
     }
 
+    // aToken
     preTokenLen = sizeof(preToken);
     memset(preToken, 0x00, preTokenLen);
     tzmon_xor((unsigned char *)iToken, 32, (unsigned char *)uToken, 32, (unsigned char *)preToken, preTokenLen);
@@ -791,11 +795,26 @@ int TZMON_AbusingDetection(JNIEnv *env, jobject context)
         return 1;
     }
 
-#if 0
-    // uToken
-    tzmon_atoi(out, outLen, uToken, &uTokenLen);
-    printBuf("uToken", uToken, uTokenLen);
-#endif
+    tzmon_atoi(out, outLen, aToken, &aTokenLen);
+    printBuf("aToken", aToken, aTokenLen);
+
+    // cMsg
+    tzmon_hmac_sha256(aToken, aTokenLen, resultMsg, 32, cMsg, &cMsgLen);
+    printBuf("cMsg", cMsg, cMsgLen);
+
+    outLen = sizeof(out);
+    argLen = sizeof(arg);
+    memset(out, 0x00, outLen);
+    memset(arg, 0x00, argLen);
+    tzmon_itoa(cMsg, cMsgLen, arg, &argLen);
+
+    strcpy(cmd, "adb shell /vendor/bin/optee_tzmon AVERIFY ");
+    strcat(cmd, arg);
+    if (_call_tzmonTA(cmd, out, &outLen) != 0) {
+        LOGD("_call_tzmonTA error: ");
+        return 1;
+    }
+
     return 0;
 }
 
