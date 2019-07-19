@@ -79,6 +79,7 @@ static uint8_t salt[32] = { 0x00, };
 static uint8_t iToken[32] = { 0x00, };
 static uint8_t uToken[32] = { 0x00, };
 static uint8_t aToken[32] = { 0x00, };
+static uint8_t tToken[32] = { 0x00, };
 
 static TEE_Result _test_sha256(SharedMem *sharedMem, uint8_t *outData, uint32_t *outDataLen)
 {
@@ -941,6 +942,45 @@ static TEE_Result _tToken(SharedMem *sharedMem, uint8_t *outData, uint32_t *outD
 	return TEE_SUCCESS;
 }
 
+static TEE_Result _tVerify(SharedMem *sharedMem, uint8_t *outData, uint32_t *outDataLen)
+{
+	if (sharedMem == NULL) return TEE_ERROR_BAD_PARAMETERS;
+
+	TEE_Result retVal;
+
+	uint8_t mac[32] = { 0x00, };
+	uint8_t tFlag[2] = { 0x08, 0x00 };
+
+	uint32_t macLen = sizeof(mac);
+	uint32_t tTokenLen = sizeof(tToken);
+	uint32_t resultMsgLen = (uint32_t)strlen((const char*)resultMsg);
+
+	uint8_t *inData = sharedMem->inData;
+	uint32_t inDataLen = sharedMem->inDataLen;
+	uint32_t tFlagLen = strlen((const char *)tFlag);
+
+	retVal = TZMON_ReadFile((uint8_t *)TTOKEN_NAME,
+			(uint32_t)strlen(TTOKEN_NAME), tToken, &tTokenLen);
+	CHECK(retVal, "TZMON_ReadFile", return retVal;);
+
+	retVal = TZMON_HMAC_SHA256(tToken, tTokenLen, resultMsg, resultMsgLen,
+			mac, &macLen);
+	CHECK(retVal, "TZMON_HMAC_SHA256", return retVal;);
+
+	if (inDataLen != macLen || 
+			strncmp((const char *)inData, (const char *)mac, macLen) != 0x00) {
+		return TEE_ERROR_GENERIC;
+	}
+
+	retVal = TZMON_WriteFile((uint8_t *)TFLAG_NAME,
+			(uint32_t)strlen(TFLAG_NAME), tFlag, tFlagLen);
+	CHECK(retVal, "TZMON_WriteFile", return retVal;);
+
+	memcpy(outData, tFlag, tFlagLen);
+	*outDataLen = tFlagLen;
+
+	return retVal;
+}
 
 TEE_Result TZMON_ParseCMD(uint32_t cmdID, TEE_Param params[4])
 {
@@ -1014,19 +1054,13 @@ TEE_Result TZMON_ParseCMD(uint32_t cmdID, TEE_Param params[4])
 		}
 		case TA_TZMON_CMD_TTOKEN:
 		{
-#if 1
 			retVal = _tToken(sharedMem, outData, outDataLen);
 			CHECK(retVal, "_aToken", return retVal;);
-#else
-			outData[0] = 0x00;
-			*outDataLen = 0x01;
-			retVal = TEE_SUCCESS;
-#endif
 			break;
 		}
 		case TA_TZMON_CMD_TVERIFY:
 		{
-#if 0
+#if 1
 			retVal = _tVerify(sharedMem, outData, outDataLen);
 			CHECK(retVal, "_aVerify", return retVal;);
 #else
