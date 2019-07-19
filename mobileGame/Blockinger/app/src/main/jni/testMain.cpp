@@ -818,6 +818,34 @@ int TZMON_AbusingDetection(JNIEnv *env, jobject context)
     return 0;
 }
 
+int TZMON_TimerSync(JNIEnv *env)
+{
+    char cmd[1024] = { 0x00, };
+    char out[1024] = { 0x00, };
+    char tGap[10] = { 0x00, };
+    double aTimeGap[3] = { 0.0, 0.0, 0.0 };
+
+    int outLen;
+
+    getCurrentTime(env, aTimeGap);
+    for (int i = 0; i < 3; i++) {
+        memset(tGap, 0x00, sizeof(tGap));
+        sprintf(tGap, "%0.4f", aTimeGap[i]);
+
+        outLen = sizeof(out);
+        memset(out, 0x00, outLen);
+        memset(cmd, 0x00, sizeof(cmd));
+        strcpy(cmd, "adb shell /vendor/bin/optee_tzmon TPRETOKEN ");
+        strcat(cmd, tGap);
+        if (_call_tzmonTA(cmd, out, &outLen) != 0) {
+            LOGD("_call_tzmonTA error: ");
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 JNIEXPORT void JNICALL Java_org_blockinger2_game_activities_MainActivity_jniSocket(JNIEnv *env, jobject context)
 {
 #if 0
@@ -894,6 +922,11 @@ JNIEXPORT jboolean JNICALL Java_org_blockinger2_game_activities_MainActivity_jni
 
     if (TZMON_AbusingDetection(env, context) != 0) {
         LOGD("TZMON_AbusingDetection error: ");
+        retVal = JNI_FALSE;
+    }
+
+    if (TZMON_TimerSync(env) != 0) {
+        LOGD("TZMON_TimerSync error: ");
         retVal = JNI_FALSE;
     }
 
