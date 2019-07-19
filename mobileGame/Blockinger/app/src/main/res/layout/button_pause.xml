@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Button xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/button_pause"
+    style="@android:style/Widget.ImageWell"
+    android:layout_width="match_parent"
+    android:layout_height="48dp"
+    android:layout_weight="0"
+    android:text="@string/pause"
+    android:textAppearance="?android:attr/textAppearanceMedium"
+    android:textColor="@color/square_error"
+    android:textColorHint="@color/holo_grey" />

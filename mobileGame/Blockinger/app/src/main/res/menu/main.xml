@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_settings"
+        android:enabled="true"
+        android:icon="@drawable/ic_settings"
+        android:orderInCategory="1"
+        android:title="@string/settings"
+        app:showAsAction="ifRoom|withText" />
+
+    <item
+        android:id="@+id/action_about"
+        android:enabled="true"
+        android:orderInCategory="2"
+        android:title="@string/about"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_help"
+        android:enabled="true"
+        android:orderInCategory="4"
+        android:title="@string/help"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_exit"
+        android:enabled="true"
+        android:orderInCategory="5"
+        android:title="@string/exit"
+        app:showAsAction="never" />
+
+</menu>

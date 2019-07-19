@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ImageButton xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/button_soft_drop"
+    style="@android:style/Widget.ImageWell"
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_weight="1"
+    android:clickable="true"
+    android:contentDescription="@string/button_soft_drop_description"
+    android:focusable="true"
+    android:scaleType="centerInside"
+    android:src="@drawable/button_soft_drop_blurred" />

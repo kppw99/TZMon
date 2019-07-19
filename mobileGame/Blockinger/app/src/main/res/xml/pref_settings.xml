@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <SwitchPreference
+        android:defaultValue="true"
+        android:key="pref_phantom"
+        android:summary="@string/pref_phantom_summary"
+        android:title="@string/pref_phantom_title" />
+
+    <SwitchPreference
+        android:defaultValue="true"
+        android:key="pref_popup"
+        android:summary="@string/pref_popup_summary"
+        android:title="@string/pref_popup_title" />
+
+    <PreferenceCategory
+        android:key="sound_settings"
+        android:title="@string/pref_category_sound">
+
+        <org.blockinger2.game.views.SeekBarPreference
+            android:defaultValue="40"
+            android:key="pref_sound_volume"
+            android:max="100"
+            android:summary="@string/pref_sound_volume_summary"
+            android:title="@string/pref_sound_volume_title" />
+
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="pref_button_sound"
+            android:summary="@string/pref_button_sound_summary"
+            android:title="@string/pref_button_sound_title" />
+
+        <org.blockinger2.game.views.SeekBarPreference
+            android:defaultValue="30"
+            android:key="pref_music_volume"
+            android:max="100"
+            android:summary="@string/pref_music_volume_summary"
+            android:title="@string/pref_music_volume_title" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="pref_vibration_settings"
+        android:title="@string/pref_category_vibration">
+
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="pref_vibration_button"
+            android:summary="@string/pref_vibration_button_summary"
+            android:title="@string/pref_vibration_button_title" />
+
+        <EditTextPreference
+            android:defaultValue="@string/pref_button_vibration_duration_default"
+            android:dialogMessage="@string/pref_button_vibration_duration_summary"
+            android:dialogTitle="@string/pref_button_vibration_duration_title"
+            android:inputType="number"
+            android:key="pref_button_vibration_duration"
+            android:negativeButtonText="Cancel"
+            android:numeric="integer"
+            android:positiveButtonText="OK"
+            android:selectAllOnFocus="true"
+            android:title="@string/pref_button_vibration_duration_title" />
+
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="pref_vibration_events"
+            android:summary="@string/pref_vibration_events_summary"
+            android:title="@string/pref_vibration_events_title" />
+
+    </PreferenceCategory>
+
+    <SwitchPreference
+        android:defaultValue="true"
+        android:key="pref_soft_drop_acceleration"
+        android:summary="@string/pref_soft_drop_acceleration_summary"
+        android:title="@string/pref_soft_drop_acceleration_title" />
+
+    <SwitchPreference
+        android:defaultValue="true"
+        android:key="pref_horizontal_acceleration"
+        android:summary="@string/pref_horizontal_acceleration_summary"
+        android:title="@string/pref_horizontal_acceleration_title" />
+
+    <SwitchPreference
+        android:defaultValue="true"
+        android:key="pref_show_fps"
+        android:summary="@string/pref_show_fps_summary"
+        android:title="@string/pref_show_fps_title" />
+
+    <PreferenceCategory
+        android:key="pref_layout_settings"
+        android:title="@string/pref_category_layout">
+
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="pref_left_handed_mode"
+            android:summary="@string/pref_left_handed_mode_summary"
+            android:title="@string/pref_left_handed_mode_title" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

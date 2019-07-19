@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <Preference
+        android:key="pref_version"
+        android:summary="@string/pref_version_summary"
+        android:title="@string/pref_version_title" />
+
+    <Preference
+        android:key="pref_license"
+        android:summary="@string/pref_license_summary"
+        android:title="@string/pref_license_title" />
+
+    <Preference
+        android:key="pref_license_music"
+        android:summary="@string/pref_license_music_summary"
+        android:title="@string/pref_license_music_title" />
+
+    <Preference
+        android:key="pref_maintainer"
+        android:summary="@string/pref_maintainer_summary"
+        android:title="@string/pref_maintainer_title" />
+
+    <Preference
+        android:key="pref_author"
+        android:summary="@string/pref_author_summary"
+        android:title="@string/pref_author_title" />
+
+</PreferenceScreen>

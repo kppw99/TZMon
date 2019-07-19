@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ImageButton xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/button_left"
+    style="@android:style/Widget.ImageWell"
+    android:layout_width="0dp"
+    android:layout_height="match_parent"
+    android:layout_weight="1"
+    android:adjustViewBounds="false"
+    android:clickable="true"
+    android:contentDescription="@string/button_left_description"
+    android:focusable="true"
+    android:scaleType="centerInside"
+    android:src="@drawable/button_left_blurred" />
