@@ -236,12 +236,18 @@ static TEEC_Result _tzmonCmd(char *cmd, uint32_t cmdLen,
 	} else if (	(memcmp(cmd, "UKEY", cmdLen) == 0) &&
 				(cmdLen == strlen("UKEY"))) {
 		*tzmonCMD = TA_TZMON_CMD_UKEY;
+	} else if (	(memcmp(cmd, "HKEY", cmdLen) == 0) &&
+				(cmdLen == strlen("HKEY"))) {
+		*tzmonCMD = TA_TZMON_CMD_HKEY;
 	} else if (	(memcmp(cmd, "APRETOKEN", cmdLen) == 0) &&
 				(cmdLen == strlen("APRETOKEN"))) {
 		*tzmonCMD = TA_TZMON_CMD_APRETOKEN;
 	} else if (	(memcmp(cmd, "TPRETOKEN", cmdLen) == 0) &&
 				(cmdLen == strlen("TPRETOKEN"))) {
 		*tzmonCMD = TA_TZMON_CMD_TPRETOKEN;
+	} else if (	(memcmp(cmd, "HPRETOKEN", cmdLen) == 0) &&
+				(cmdLen == strlen("HPRETOKEN"))) {
+		*tzmonCMD = TA_TZMON_CMD_HPRETOKEN;
 	} else if (	(memcmp(cmd, "ITOKEN", cmdLen) == 0) &&
 				(cmdLen == strlen("ITOKEN"))) {
 		*tzmonCMD = TA_TZMON_CMD_ITOKEN;
@@ -460,6 +466,14 @@ static TEEC_Result parseCMD(int argc, char **argv, uint32_t *tzmonCMD)
 			case TA_TZMON_CMD_TVERIFY:
 				tzmon_atoi((unsigned char *)argv[2], strlen(argv[2]),
 						sharedMem.inData, &sharedMem.inDataLen);
+				break;
+			case TA_TZMON_CMD_HPRETOKEN:
+				tzmon_atoi((unsigned char *)argv[2], strlen(argv[2]),
+						sharedMem.inData, &sharedMem.inDataLen);
+				break;
+			case TA_TZMON_CMD_HKEY:
+				sharedMem.inDataLen = strlen(argv[2]);
+				memcpy(sharedMem.inData, argv[2], sharedMem.inDataLen);
 				break;
 			default:
 				retVal = TEEC_ERROR_BAD_PARAMETERS;

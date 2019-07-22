@@ -33,6 +33,8 @@
 #define TTOKEN_NAME		"tToken"
 #define TFLAG_NAME		"tFlag"
 
+#define HPREFLAG_NAME	"hPreFlag"
+
 #define DELAY			(125)	// 125 millisec --> 0.125 sec.
 
 #if (USE_TEST_DATA)
@@ -386,6 +388,7 @@ static TEE_Result _initFlag(SharedMem *sharedMem, uint8_t *outData, uint32_t *ou
 		TZMON_DeleteFile((uint8_t *)TFLAG_NAME, (uint32_t)strlen(TFLAG_NAME));
 		TZMON_DeleteFile((uint8_t *)APREFLAG_NAME, (uint32_t)strlen(APREFLAG_NAME));
 		TZMON_DeleteFile((uint8_t *)TPREFLAG_NAME, (uint32_t)strlen(TPREFLAG_NAME));
+		TZMON_DeleteFile((uint8_t *)HPREFLAG_NAME, (uint32_t)strlen(HPREFLAG_NAME));
 	} else if (strncmp((const char *)inData, "iFlag", inDataLen) == 0) {
 		TZMON_DeleteFile((uint8_t *)IFLAG_NAME, (uint32_t)strlen(IFLAG_NAME));
 	} else if (strncmp((const char *)inData, "uFlag", inDataLen) == 0) {
@@ -398,6 +401,8 @@ static TEE_Result _initFlag(SharedMem *sharedMem, uint8_t *outData, uint32_t *ou
 		TZMON_DeleteFile((uint8_t *)APREFLAG_NAME, (uint32_t)strlen(APREFLAG_NAME));
 	} else if (strncmp((const char *)inData, "tPreFlag", inDataLen) == 0) {
 		TZMON_DeleteFile((uint8_t *)TPREFLAG_NAME, (uint32_t)strlen(TPREFLAG_NAME));
+	} else if (strncmp((const char *)inData, "hPreFlag", inDataLen) == 0) {
+		TZMON_DeleteFile((uint8_t *)HPREFLAG_NAME, (uint32_t)strlen(HPREFLAG_NAME));
 	} else {
 		outData[0] = 0x01;
 		return TEE_ERROR_GENERIC;
@@ -982,6 +987,96 @@ static TEE_Result _tVerify(SharedMem *sharedMem, uint8_t *outData, uint32_t *out
 	return retVal;
 }
 
+static TEE_Result _hPreToken(SharedMem *sharedMem, uint8_t *outData, uint32_t *outDataLen)
+{
+	if (sharedMem == NULL) return TEE_ERROR_BAD_PARAMETERS;
+
+	TEE_Result retVal;
+
+	uint8_t hPre[32] = { 0x00, };
+	uint8_t temp1[32] = { 0x00, };
+	uint8_t temp2[32] = { 0x00, };
+
+	uint32_t hPreLen = sizeof(hPre);
+	uint32_t temp1Len = sizeof(temp1);
+	uint32_t temp2Len = sizeof(temp2);
+	uint32_t iTokenLen = sizeof(iToken);
+	uint32_t uTokenLen = sizeof(uToken);
+	uint32_t aTokenLen = sizeof(aToken);
+	uint32_t tTokenLen = sizeof(tToken);
+
+	uint8_t hPreFlag[1] = { 0x01 };
+	uint32_t hPreFlagLen = sizeof(hPreFlag);
+	
+	uint8_t *inData = sharedMem->inData;
+	uint32_t inDataLen = sharedMem->inDataLen;
+
+	retVal = TZMON_ReadFile((uint8_t *)ITOKEN_NAME,
+			(uint32_t)strlen(ITOKEN_NAME), iToken, &iTokenLen);
+	CHECK(retVal, "TZMON_ReadFile", return retVal;);
+
+	retVal = TZMON_ReadFile((uint8_t *)UTOKEN_NAME,
+			(uint32_t)strlen(UTOKEN_NAME), uToken, &uTokenLen);
+	CHECK(retVal, "TZMON_ReadFile", return retVal;);
+	
+	retVal = TZMON_ReadFile((uint8_t *)ATOKEN_NAME,
+			(uint32_t)strlen(ATOKEN_NAME), aToken, &aTokenLen);
+	CHECK(retVal, "TZMON_ReadFile", return retVal;);
+	
+	retVal = TZMON_ReadFile((uint8_t *)TTOKEN_NAME,
+			(uint32_t)strlen(TTOKEN_NAME), tToken, &tTokenLen);
+	CHECK(retVal, "TZMON_ReadFile", return retVal;);
+
+	retVal = TZMON_XOR(iToken, iTokenLen, uToken, uTokenLen, temp1, temp1Len);
+	CHECK(retVal, "TZMON_XOR", return retVal;);
+
+	retVal = TZMON_XOR(aToken, aTokenLen, tToken, tTokenLen, temp2, temp2Len);
+	CHECK(retVal, "TZMON_XOR", return retVal;);
+	
+	retVal = TZMON_XOR(temp1, temp1Len, temp2, temp2Len, hPre, hPreLen);
+	CHECK(retVal, "TZMON_XOR", return retVal;);
+
+	if (inDataLen != hPreLen ||
+			strncmp((const char *)inData, (const char *)hPre, hPreLen) != 0) {
+		return TEE_ERROR_GENERIC;
+	}
+
+	retVal = TZMON_WriteFile((uint8_t *)HPREFLAG_NAME,
+			(uint32_t)strlen(HPREFLAG_NAME), hPreFlag, hPreFlagLen);
+	CHECK(retVal, "TZMON_WriteFile", return retVal;);
+
+	memcpy(outData, hPreFlag, hPreFlagLen);
+	*outDataLen = hPreFlagLen;
+	
+	return retVal;
+}
+
+static TEE_Result _hKey(SharedMem *sharedMem, uint8_t *outData, uint32_t *outDataLen)
+{
+	if (sharedMem == NULL) return TEE_ERROR_BAD_PARAMETERS;
+
+	TEE_Result retVal;
+
+	uint8_t hPreFlag[1] = { 0x00 };
+	uint32_t hPreFlagLen = sizeof(hPreFlag);
+	
+	//TODO: retrieve corresponding data from secure storage
+
+	retVal = TZMON_ReadFile((uint8_t *)HPREFLAG_NAME,
+			(uint32_t)strlen(HPREFLAG_NAME), hPreFlag, &hPreFlagLen);
+	CHECK(retVal, "TZMON_ReadFile", return retVal;);
+
+	if (hPreFlag[0] == 0x00) {
+		return TEE_ERROR_GENERIC;
+	}
+
+	*outDataLen = 32;
+	retVal = TZMON_Random(outData, *outDataLen);
+	CHECK(retVal, "TZMON_Random", return retVal;);
+
+	return retVal;
+}
+
 TEE_Result TZMON_ParseCMD(uint32_t cmdID, TEE_Param params[4])
 {
 	TEE_Result retVal;
@@ -1055,19 +1150,25 @@ TEE_Result TZMON_ParseCMD(uint32_t cmdID, TEE_Param params[4])
 		case TA_TZMON_CMD_TTOKEN:
 		{
 			retVal = _tToken(sharedMem, outData, outDataLen);
-			CHECK(retVal, "_aToken", return retVal;);
+			CHECK(retVal, "_tToken", return retVal;);
 			break;
 		}
 		case TA_TZMON_CMD_TVERIFY:
 		{
-#if 1
 			retVal = _tVerify(sharedMem, outData, outDataLen);
-			CHECK(retVal, "_aVerify", return retVal;);
-#else
-			outData[0] = 0x00;
-			*outDataLen = 0x01;
-			retVal = TEE_SUCCESS;
-#endif
+			CHECK(retVal, "_tVerify", return retVal;);
+			break;
+		}
+		case TA_TZMON_CMD_HPRETOKEN:
+		{
+			retVal = _hPreToken(sharedMem, outData, outDataLen);
+			CHECK(retVal, "_hPreToken", return retVal;);
+			break;
+		}
+		case TA_TZMON_CMD_HKEY:
+		{
+			retVal = _hKey(sharedMem, outData, outDataLen);
+			CHECK(retVal, "_hKey", return retVal;);
 			break;
 		}
 		case TA_TZMON_CMD_SHA256:
