@@ -67,6 +67,7 @@ extern "C" {
 #define org_blockinger2_game_activities_MainActivity_MAX_NUM_PENDING_FRAGMENT_ACTIVITY_RESULTS 65534L
 #undef org_blockinger2_game_activities_MainActivity_MSG_RESUME_PENDING
 #define org_blockinger2_game_activities_MainActivity_MSG_RESUME_PENDING 2L
+
 /*
  * Class:     org_blockinger2_game_activities_MainActivity
  * Method:    jniapphashtest
@@ -74,6 +75,14 @@ extern "C" {
  */
 JNIEXPORT jboolean JNICALL Java_org_blockinger2_game_activities_MainActivity_jniapphashtest
   (JNIEnv *, jobject);
+
+/*
+ * Class:     org_blockinger2_game_activities_MainActivity
+ * Method:    jniHidingKey
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_org_blockinger2_game_activities_MainActivity_jniHidingKey
+  (JNIEnv *, jobject, jstring);
 
 /*
  * Class:     org_blockinger2_game_activities_MainActivity

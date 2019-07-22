@@ -1,11 +1,13 @@
 //
 // Created by HCR on 2019-05-15.
 //
-#include <android/log.h>
+#include <android/log.h>    // for android log function
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "openssl/sha.h"
+#include <unistd.h>         // for socket
+#include <sys/socket.h>     // for socket
+#include <arpa/inet.h>      // for socket
 
 #include "jniMain.h"
 
@@ -15,88 +17,183 @@
 #define LOGW(...) __android_log_print(ANDROID_LOG_WARN   , "[LOGW]", __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR  , "[LOGE]", __VA_ARGS__)
 
-int generate_hash()
+static void tzmon_itoa(unsigned char *src, int srcLen, char *target, int *targetLen)
 {
-    int retVal = 2, temp = 0;
-    const int bufSize = 1024;
-
-    unsigned char hash[SHA256_DIGEST_LENGTH] = { 0x00, };
-    unsigned char input_data[bufSize] = { 0x01, };
-
-    SHA256_CTX sha256;
-
-    SHA256_Init(&sha256);
-    SHA256_Update(&sha256, input_data, bufSize);
-    SHA256_Final(hash, &sha256);
-
-    retVal = (int)hash % 9;
-    LOGD("HASH: %ld", hash);
-    LOGD("retVal: %d", retVal);
-
-    if (retVal < 0) {
-        retVal *= -1;
-    } else if (retVal == 0) {
-        retVal = 1;
+    for (int i = 0; i < srcLen; i++) {
+        sprintf(&target[i * 2], "%02x", (unsigned int)src[i]);
     }
 
-    LOGD("start level: %d", retVal);
+    *targetLen = srcLen * 2;
+    target[*targetLen] = 0x00;
+}
+
+static void tzmon_atoi(char *src, int srcLen, unsigned char *dest, int *destLen)
+{
+    int hex;
+    char tmp[3] = { 0x00, };
+
+    if (src == NULL || dest == NULL || destLen == NULL) return;
+
+    *destLen = srcLen / 2;
+    for (int i = 0; i < *destLen; i++) {
+        memset(tmp, 0x00, sizeof(tmp));
+        memcpy(tmp, src + i * 2, 2);
+
+        if (tmp[0] >= '0' && tmp[0] <= '9') {
+            if (tmp[1] >= '0' && tmp[1] <= '9') {
+                hex = atoi(tmp);
+                dest[i] = ((hex / 10) * 16) + (hex % 10);
+            } else {
+                dest[i] = atoi(&tmp[0]) * 16;
+                dest[i] += tmp[1] - 87;
+            }
+        } else {
+            dest[i] = (tmp[0] - 87) * 16;
+            if (tmp[1] >= '0' && tmp[1] <= '9') {
+                dest[i] += atoi(&tmp[1]);
+            } else {
+                dest[i] += tmp[1] - 87;
+            }
+        }
+    }
+}
+
+static void printBuf(char *title, unsigned char *data, int dataLen)
+{
+    char buffer[1024] = { 0x00, };
+
+    if (dataLen == 0 || data == NULL) return;
+
+    LOGD("%s", title);
+    for (int i = 0; i < dataLen; i++) {
+        sprintf(&buffer[i * 5], "0x%02x ", (unsigned int)data[i]);
+    }
+
+    LOGD("%s", buffer);
+}
+
+int tzmon_xor(unsigned char *first, int firstLen, unsigned char *second, int secondLen, unsigned char *out, int outLen)
+{
+    if (first == NULL || second == NULL || out == NULL) {
+        LOGD("Bad Parameter");
+        return 1;
+    }
+
+    if (outLen != firstLen || outLen != secondLen) {
+        LOGD("Bad Parameter");
+        return 1;
+    }
+
+    for (int i = 0; i < outLen; i++) {
+        out[i] = first[i] ^ second[i];
+    }
+
+    return 0;
+}
+
+static int socketWrite(int sockFD, char *msg, int msgLen)
+{
+    char outBuf[1024] = { 0x00, };
+    int outBufLen = sizeof(outBuf);
+    int retVal = -1;
+
+    memcpy(outBuf, msg, msgLen);
+    retVal = write(sockFD, outBuf, msgLen);
 
     return retVal;
 }
 
-JNIEXPORT jint JNICALL Java_org_blockinger2_game_components_GameState_jnireturnlevel(JNIEnv *env, jobject context)
+static int socketRead(int sockFD, char *buf, int *bufLen)
 {
-    int hash = 0;
-    hash = generate_hash();
+    int retVal = -1;
 
-#if 0
-    // B=byte / C=char / D=double / F=float / I=int / J=long / S=short / V=void / Z=boolean
-    jclass clazz = env->GetObjectClass(obj);
-    jmethodID mid = env->GetMethodID(clazz, "SampleMethod", "(IZ)V");
-    env->CallVoidMethod(obj, mid, n, b);
-#endif
-
-    return hash;
-}
-
-void generate_appHash(const char *path, char *appHash)
-{
-    FILE *fp = fopen(path, "r");
-    SHA256_CTX sha256;
-
-    char input_data[2048] = { 0x00, };
-    unsigned char hash[SHA256_DIGEST_LENGTH] = { 0x00, };
-    char hash_string[SHA256_DIGEST_LENGTH * 2 + 1] = { 0x00, };
-
-    SHA256_Init(&sha256);
-
-    while (fgets(input_data, sizeof(input_data), fp) != NULL) {
-        SHA256_Update(&sha256, input_data, sizeof(input_data));
-        memset(input_data, 0x00, sizeof(input_data));
+    if (buf == NULL || bufLen == NULL) {
+        LOGD("Bad Parameter");
+        return -1;
     }
 
-    SHA256_Final(hash, &sha256);
+    retVal = read(sockFD, buf, *bufLen);
+    *bufLen = retVal;
 
-    for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
-        sprintf(&hash_string[i*2], "%02X", (unsigned int)hash[i]);
-    }
-
-    LOGD("REAL_APP_HASH: %s", hash_string);
-    memcpy(appHash, hash_string, sizeof(hash_string));
-    fclose(fp);
+    return retVal;
 }
 
-JNIEXPORT jstring JNICALL Java_org_blockinger2_game_components_GameState_jniapphash(JNIEnv *env, jobject context, jstring appPath)
+static void closeSocket(int sockFD)
 {
-    char appHash[SHA256_DIGEST_LENGTH * 2 + 1] = { 0x00, };
-    const char *path = env->GetStringUTFChars(appPath, 0x00);
+    socketWrite(sockFD, "quit", (int)strlen("quit"));
+    close(sockFD);
+}
 
-    LOGD("path: %s", path);
+int _call_tzmonTA(char *cmd, char *out, int *outLen)
+{
+    int sockFD, port = 9999;
+    char *ip = "163.152.127.108";
+    struct sockaddr_in sockAddr;
 
-    generate_appHash(path, appHash);
+    if (cmd == NULL || out == NULL || outLen == NULL) {
+        LOGD("Bad Parameter");
+        return 1;
+    }
 
-    LOGD("hash: %s", appHash);
-    env->ReleaseStringUTFChars(appPath, path);
+    sockFD = socket(AF_INET, SOCK_STREAM, 0);
+    sockAddr.sin_family = AF_INET;
+    sockAddr.sin_addr.s_addr = inet_addr(ip);
+    sockAddr.sin_port = htons(port);
 
-    return env->NewStringUTF(appHash);
+    if (connect(sockFD, (struct sockaddr *)&sockAddr, sizeof(sockAddr)) < 0) {
+        LOGD("Connect error: ");
+        return 1;
+    }
+
+    if (socketWrite(sockFD, cmd, (int)strlen(cmd)) <= 0) {
+        LOGD("Write error: ");
+        return 1;
+    }
+
+    if (socketRead(sockFD, out, outLen) <= 0) {
+        LOGD("Read error: ");
+        return 1;
+    }
+
+    closeSocket(sockFD);
+
+    LOGD("[Command] %s", cmd);
+    LOGD("[Result] %s(%d)", out, *outLen);
+    if (strcmp(out, "fail") == 0) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+JNIEXPORT jint JNICALL Java_org_blockinger2_game_components_GameState_jniHidingKey(JNIEnv *env, jobject context, jstring data)
+{
+    int retVal;
+
+    char cmd[1024] = { 0x00, };
+    char out[1024] = { 0x00, };
+
+    unsigned char hKey[32] = { 0x00, };
+
+    const char *nativeData = env->GetStringUTFChars(data, 0x00);
+
+    int outLen, index, hKeyLen;
+
+    strcpy(cmd, "adb shell /vendor/bin/optee_tzmon HKEY ");
+    strcat(cmd, nativeData);
+    if (_call_tzmonTA(cmd, out, &outLen) != 0) {
+        LOGD("_call_tzmonTA error: ");
+        return 1;
+    }
+
+    tzmon_atoi(out, outLen, hKey, &hKeyLen);
+    printBuf("hKey", hKey, hKeyLen);
+
+    index = hKey[0] % hKeyLen;
+    retVal = hKey[index];
+    LOGD("index: %d, hKey: 0x%x", index, retVal);
+
+    env->ReleaseStringUTFChars(data, nativeData);
+
+    return retVal;
 }

@@ -65,6 +65,7 @@ public class MainActivity extends AppCompatActivity
     private ScoreDataSource datasource;
     private SimpleCursorAdapter adapter;
     private int startLevel;
+    private int hKey;
     private Sound sound;
 
     static {
@@ -72,6 +73,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     public native boolean jniapphashtest();
+    public native int jniHidingKey(String data);
     public native void jniSocket();
 
     public String getAppPath() {
@@ -269,6 +271,7 @@ public class MainActivity extends AppCompatActivity
         } else {
             Log.d("[LOGD] App Integrity checking ", String.valueOf(res));
         }
+
         //==========================================================================================
         // Enc to add source code for checking app integrity by kevin
         //==========================================================================================
@@ -304,7 +307,9 @@ public class MainActivity extends AppCompatActivity
         });
 
         // Create Startlevel dialog
-        startLevel = 1;
+//        startLevel = 1;
+        this.hKey = jniHidingKey("startLevel");
+        setStartLevel(1);
         AlertDialog.Builder dialogStartLevel = new AlertDialog.Builder(this);
         dialogStartLevel.setTitle(R.string.dialog_start_level_title);
         dialogStartLevel.setCancelable(false);
@@ -314,7 +319,8 @@ public class MainActivity extends AppCompatActivity
             Intent intent = new Intent(this, GameActivity.class);
             Bundle bundle = new Bundle();
             bundle.putInt("mode", GameActivity.NEW_GAME); // Your id
-            bundle.putInt("level", startLevel); // Your id
+//            bundle.putInt("level", startLevel); // Your id
+            bundle.putInt("level", getStartLevel());
             bundle.putString("playername", ((TextView) findViewById(R.id.activity_main_edittext_player_name)).getText().toString()); // Your id
             intent.putExtras(bundle); // Put your id to your next Intent
             startActivityForResult(intent, SCORE_REQUEST);
@@ -330,7 +336,8 @@ public class MainActivity extends AppCompatActivity
                 public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
                 {
                     viewStartLevelTextview.setText(String.valueOf(progress));
-                    startLevel = progress;
+//                    startLevel = progress;
+                    setStartLevel(progress);
                 }
 
                 @Override
@@ -346,8 +353,10 @@ public class MainActivity extends AppCompatActivity
                 }
             });
 
-            viewStartLevelSeekbar.setProgress(startLevel);
-            viewStartLevelTextview.setText(String.valueOf(startLevel));
+//            viewStartLevelSeekbar.setProgress(startLevel);
+//            viewStartLevelTextview.setText(String.valueOf(startLevel));
+            viewStartLevelSeekbar.setProgress(getStartLevel());
+            viewStartLevelTextview.setText(String.valueOf(getStartLevel()));
             dialogStartLevel.setView(viewStartLevelSelector);
             dialogStartLevel.show();
         });
@@ -527,5 +536,15 @@ public class MainActivity extends AppCompatActivity
         Log.d("APP_HASH", appHash);
 
         return appHash;
+    }
+
+    public void setStartLevel(int level)
+    {
+        this.startLevel = (level ^ this.hKey);
+    }
+
+    public int getStartLevel()
+    {
+        return (this.startLevel ^ this.hKey);
     }
 }

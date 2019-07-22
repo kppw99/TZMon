@@ -932,6 +932,58 @@ JNIEXPORT void JNICALL Java_org_blockinger2_game_activities_MainActivity_jniSock
 #endif
 }
 
+JNIEXPORT jint JNICALL Java_org_blockinger2_game_activities_MainActivity_jniHidingKey(JNIEnv *env, jobject context, jstring data)
+{
+    int retVal;
+
+    char cmd[1024] = { 0x00, };
+    char out[1024] = { 0x00, };
+    char arg[1024] = { 0x00, };
+
+    unsigned char temp1[32] = { 0x00, };
+    unsigned char temp2[32] = { 0x00, };
+    unsigned char preToken[32] = { 0x00, };
+    unsigned char hKey[32] = { 0x00, };
+
+    const char *nativeData = env->GetStringUTFChars(data, 0x00);
+
+    int outLen, argLen, preTokenLen, index, hKeyLen;
+
+    tzmon_xor(iToken, 32, uToken, 32, temp1, 32);
+    tzmon_xor(aToken, 32, tToken, 32, temp2, 32);
+    tzmon_xor(temp1, 32, temp2, 32, preToken, 32);
+    tzmon_itoa((unsigned char *)preToken, 32, arg, &argLen);
+
+    outLen = sizeof(out);
+    memset(out, 0x00, outLen);
+    strcpy(cmd, "adb shell /vendor/bin/optee_tzmon HPRETOKEN ");
+    strcat(cmd, arg);
+    if (_call_tzmonTA(cmd, out, &outLen) != 0) {
+        LOGD("_call_tzmonTA error: ");
+        return 1;
+    }
+
+    outLen = sizeof(out);
+    memset(out, 0x00, outLen);
+    strcpy(cmd, "adb shell /vendor/bin/optee_tzmon HKEY ");
+    strcat(cmd, nativeData);
+    if (_call_tzmonTA(cmd, out, &outLen) != 0) {
+        LOGD("_call_tzmonTA error: ");
+        return 1;
+    }
+
+    tzmon_atoi(out, outLen, hKey, &hKeyLen);
+    printBuf("hKey", hKey, hKeyLen);
+
+    index = preToken[0] % hKeyLen;
+    retVal = hKey[index];
+    LOGD("index: %d, hKey: 0x%x", index, retVal);
+
+    env->ReleaseStringUTFChars(data, nativeData);
+
+    return retVal;
+}
+
 JNIEXPORT jboolean JNICALL Java_org_blockinger2_game_activities_MainActivity_jniapphashtest(JNIEnv *env, jobject context)
 {
     jboolean retVal = JNI_TRUE;

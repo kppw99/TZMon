@@ -46,6 +46,7 @@ public class GameState extends Component
     private long score;
     private int clearedLines;
     private int level;
+    private int hKey;
     private int maxLevel;
     private long gameTime; // += (systemtime - currenttime) at start of cycle
     private long currentTime; // = systemtime at start of cycle
@@ -79,8 +80,7 @@ public class GameState extends Component
         System.loadLibrary("HelloJNI");
     }
 
-    public native int jnireturnlevel();
-    public native String jniapphash(String appPash);
+    public native int jniHidingKey(String data);
 
     private GameState(GameActivity gameActivity)
     {
@@ -118,6 +118,8 @@ public class GameState extends Component
         popupTime = -(popupAttack + popupSustain + popupDecay);
         clearedLines = 0;
         level = 0;
+        hKey = jniHidingKey("level");  // kevin
+        Log.d("[LOGD] gameState jniHidingKey", String.valueOf(hKey));
         score = 0;
         songtime = 0;
         maxLevel = host.getResources().getInteger(R.integer.levels);
@@ -219,7 +221,7 @@ public class GameState extends Component
 
     int getAutoDropInterval()
     {
-        return dropIntervals[Math.min(level, maxLevel)];
+        return dropIntervals[Math.min(getLevel(), maxLevel)];
     }
 
     long getMoveInterval()
@@ -349,7 +351,7 @@ public class GameState extends Component
         scheduleSpawn = false;
         host.display.invalidatePhantom();
         activePieces[activeIndex].setActive(true);
-        setNextDropTime(gameTime + dropIntervals[Math.min(level, maxLevel)]);
+        setNextDropTime(gameTime + dropIntervals[Math.min(getLevel(), maxLevel)]);
         setNextPlayerDropTime(gameTime);
         setNextPlayerMoveTime(gameTime);
         softDropDistance = 0;
@@ -403,7 +405,7 @@ public class GameState extends Component
 
     String getLevelString()
     {
-        return String.valueOf(level);
+        return String.valueOf(getLevel());
     }
 
     public String getTimeString()
@@ -456,21 +458,24 @@ public class GameState extends Component
 
     void nextLevel()
     {
-        level++;
+        this.level = this.level ^ this.hKey;
+        this.level++;
+        this.level = this.level ^ this.hKey;
     }
 
     public int getLevel()
     {
-        return level;
+        return (this.level ^ this.hKey);
     }
 
     public void setLevel(int level)
     {
         //this.level = level;
-        this.level = jnireturnlevel(); // modified by kevin
+        //this.level = jnireturnlevel(); // modified by kevin
 
         nextDropTime = host.getResources().getIntArray(R.array.intervals)[level];
         clearedLines = 10 * level;
+        this.level = level ^ this.hKey;
     }
 
     int getMaxLevel()
@@ -587,14 +592,14 @@ public class GameState extends Component
         softDropDistance++;
     }
 
-    public String getJNIAppHash(String appPath)
-    {
-        String appHash = new String();
-        int numBytes = 0;
-
-        appHash = jniapphash(appPath);
-        Log.d("APP_HASH_JNI", appHash);
-
-        return appHash;
-    }
+//    public String getJNIAppHash(String appPath)
+//    {
+//        String appHash = new String();
+//        int numBytes = 0;
+//
+//        appHash = jniapphash(appPath);
+//        Log.d("APP_HASH_JNI", appHash);
+//
+//        return appHash;
+//    }
 }

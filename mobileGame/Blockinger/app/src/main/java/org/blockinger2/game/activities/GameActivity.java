@@ -82,15 +82,15 @@ public class GameActivity extends AppCompatActivity
             }
         }
 
-        String appPath = null;
-        PackageInfo packageInfo = null;
-        try {
-            packageInfo = this.getPackageManager().getPackageInfo(this.getPackageName(), PackageManager.GET_META_DATA);
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-        }
-        appPath = packageInfo.applicationInfo.sourceDir;
-        game.getJNIAppHash(appPath);
+//        String appPath = null;
+//        PackageInfo packageInfo = null;
+//        try {
+//            packageInfo = this.getPackageManager().getPackageInfo(this.getPackageName(), PackageManager.GET_META_DATA);
+//        } catch (PackageManager.NameNotFoundException e) {
+//            e.printStackTrace();
+//        }
+//        appPath = packageInfo.applicationInfo.sourceDir;
+//        game.getJNIAppHash(appPath);
 
         game.reconnect(this);
         defeatDialog = new DefeatDialogFragment();
