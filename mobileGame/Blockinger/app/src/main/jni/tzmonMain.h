@@ -70,27 +70,51 @@ extern "C" {
 
 /*
  * Class:     org_blockinger2_game_activities_MainActivity
- * Method:    jniapphashtest
- * Signature: ()Ljava/lang/Boolean;
+ * Method:    tzmonInitKeyNFlag
+ * Signature: ()Z
  */
-JNIEXPORT jboolean JNICALL Java_org_blockinger2_game_activities_MainActivity_jniapphashtest
+JNIEXPORT jboolean JNICALL Java_org_blockinger2_game_activities_MainActivity_tzmonInitKeyNFlag
   (JNIEnv *, jobject);
 
 /*
  * Class:     org_blockinger2_game_activities_MainActivity
- * Method:    jniHidingKey
+ * Method:    tzmonCheckAppHash
+ * Signature: ()Z
+ */
+JNIEXPORT jboolean JNICALL Java_org_blockinger2_game_activities_MainActivity_tzmonCheckAppHash
+  (JNIEnv *, jobject);
+
+  /*
+   * Class:     org_blockinger2_game_activities_MainActivity
+   * Method:    tzmonSecureUpdate
+   * Signature: ()Z
+   */
+  JNIEXPORT jboolean JNICALL Java_org_blockinger2_game_activities_MainActivity_tzmonSecureUpdate
+    (JNIEnv *, jobject);
+
+/*
+ * Class:     org_blockinger2_game_activities_MainActivity
+ * Method:    tzmonAbusingDetection
+ * Signature: ()Z
+ */
+JNIEXPORT jboolean JNICALL Java_org_blockinger2_game_activities_MainActivity_tzmonAbusingDetection
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     org_blockinger2_game_activities_MainActivity
+ * Method:    tzmonSyncTimer
+ * Signature: ()Z
+ */
+JNIEXPORT jboolean JNICALL Java_org_blockinger2_game_activities_MainActivity_tzmonSyncTimer
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     org_blockinger2_game_activities_MainActivity
+ * Method:    tzmonHidingData
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_org_blockinger2_game_activities_MainActivity_jniHidingKey
+JNIEXPORT jint JNICALL Java_org_blockinger2_game_activities_MainActivity_tzmonHidingData
   (JNIEnv *, jobject, jstring);
-
-/*
- * Class:     org_blockinger2_game_activities_MainActivity
- * Method:    jniSocket
- * Signature: ()V
- */
-JNIEXPORT void JNICALL Java_org_blockinger2_game_activities_MainActivity_jniSocket
-  (JNIEnv *, jobject);
 
 #ifdef __cplusplus
 }

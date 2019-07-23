@@ -1,10 +1,14 @@
 package org.blockinger2.game.components;
 
 import android.R.color;
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.util.Log;
 
 import org.blockinger2.game.R;
 import org.blockinger2.game.activities.GameActivity;
+import org.blockinger2.game.activities.MainActivity;
 import org.blockinger2.game.engine.PieceGenerator;
 import org.blockinger2.game.pieces.IPiece;
 import org.blockinger2.game.pieces.JPiece;
@@ -18,6 +22,8 @@ import org.blockinger2.game.pieces.ZPiece;
 import java.text.SimpleDateFormat;
 import java.util.GregorianCalendar;
 import java.util.Locale;
+
+import static java.security.AccessController.getContext;
 
 public class GameState extends Component
 {
@@ -46,7 +52,6 @@ public class GameState extends Component
     private long score;
     private int clearedLines;
     private int level;
-    private int hKey;
     private int maxLevel;
     private long gameTime; // += (systemtime - currenttime) at start of cycle
     private long currentTime; // = systemtime at start of cycle
@@ -76,11 +81,24 @@ public class GameState extends Component
     private int popupDecay;
     private int softDropDistance;
 
+    //==============================================================================================
+    // Start to add source code for using TZMON JNI Library by kevin
+    //==============================================================================================
+
+//    private final boolean tzmonHKeyUse = MainActivity.tzmonUse;
+    private final boolean tzmonHKeyUse = true;
+
     static {
-        System.loadLibrary("HelloJNI");
+        System.loadLibrary("tzmonLightJNI");
     }
 
-    public native int jniHidingKey(String data);
+    private int hKey;
+
+    public native int tzmonHKey(String data);
+
+    //==============================================================================================
+    // End to add source code for using TZMON JNI Library by kevin
+    //==============================================================================================
 
     private GameState(GameActivity gameActivity)
     {
@@ -118,8 +136,13 @@ public class GameState extends Component
         popupTime = -(popupAttack + popupSustain + popupDecay);
         clearedLines = 0;
         level = 0;
-        hKey = jniHidingKey("level");  // kevin
-        Log.d("[LOGD] gameState jniHidingKey", String.valueOf(hKey));
+        if (tzmonHKeyUse) {
+            hKey = tzmonHKey("level");
+            Log.d("[LOGD] GameState HidingKey", String.valueOf(hKey));
+            if (hKey == 0x00) {
+                MainActivity.alertDialog(gameActivity, "비정상적인 접근입니다.");
+            }
+        }
         score = 0;
         songtime = 0;
         maxLevel = host.getResources().getInteger(R.integer.levels);
@@ -458,24 +481,33 @@ public class GameState extends Component
 
     void nextLevel()
     {
-        this.level = this.level ^ this.hKey;
-        this.level++;
-        this.level = this.level ^ this.hKey;
+        if (tzmonHKeyUse) {
+            this.level = this.level ^ this.hKey;
+            this.level++;
+            this.level = this.level ^ this.hKey;
+        } else {
+            this.level++;
+        }
     }
 
     public int getLevel()
     {
-        return (this.level ^ this.hKey);
+        if (tzmonHKeyUse) {
+            return (this.level ^ this.hKey);
+        } else {
+            return this.level;
+        }
     }
 
     public void setLevel(int level)
     {
-        //this.level = level;
-        //this.level = jnireturnlevel(); // modified by kevin
-
         nextDropTime = host.getResources().getIntArray(R.array.intervals)[level];
         clearedLines = 10 * level;
-        this.level = level ^ this.hKey;
+        if (tzmonHKeyUse) {
+            this.level = level ^ this.hKey;
+        } else {
+            this.level = level;
+        }
     }
 
     int getMaxLevel()
@@ -591,15 +623,4 @@ public class GameState extends Component
     {
         softDropDistance++;
     }
-
-//    public String getJNIAppHash(String appPath)
-//    {
-//        String appHash = new String();
-//        int numBytes = 0;
-//
-//        appHash = jniapphash(appPath);
-//        Log.d("APP_HASH_JNI", appHash);
-//
-//        return appHash;
-//    }
 }

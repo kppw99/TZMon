@@ -20,7 +20,7 @@ extern "C" {
  * Method:    jniHidingKey
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_org_blockinger2_game_components_GameState_jniHidingKey
+JNIEXPORT jint JNICALL Java_org_blockinger2_game_components_GameState_tzmonHKey
   (JNIEnv *, jobject, jstring);
 
 #ifdef __cplusplus

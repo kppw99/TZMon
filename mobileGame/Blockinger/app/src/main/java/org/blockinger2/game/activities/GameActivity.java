@@ -1,15 +1,9 @@
 package org.blockinger2.game.activities;
 
-import android.app.ActivityManager;
-import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.widget.ImageButton;
 
@@ -21,8 +15,6 @@ import org.blockinger2.game.engine.Sound;
 import org.blockinger2.game.engine.WorkThread;
 import org.blockinger2.game.fragments.DefeatDialogFragment;
 import org.blockinger2.game.views.BlockBoardView;
-
-import java.util.List;
 
 public class GameActivity extends AppCompatActivity
 {
@@ -53,14 +45,6 @@ public class GameActivity extends AppCompatActivity
         // Read starting Arguments
         Bundle bundle = getIntent().getExtras();
 
-//        ActivityManager actMgr = (ActivityManager) getApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
-//        List<ActivityManager.RunningAppProcessInfo> processList = actMgr.getRunningAppProcesses();
-//
-//        Log.d("[LOGD] processList.size() ", String.valueOf(processList.size()));
-//        for (int i = 0; i < processList.size(); i++) {
-//            Log.d("[LOGD] Running Process: ", processList.get(i).processName);
-//        }
-
         // Create components
         game = (GameState) getLastCustomNonConfigurationInstance();
 
@@ -81,16 +65,6 @@ public class GameActivity extends AppCompatActivity
                 game = GameState.getInstance(this);
             }
         }
-
-//        String appPath = null;
-//        PackageInfo packageInfo = null;
-//        try {
-//            packageInfo = this.getPackageManager().getPackageInfo(this.getPackageName(), PackageManager.GET_META_DATA);
-//        } catch (PackageManager.NameNotFoundException e) {
-//            e.printStackTrace();
-//        }
-//        appPath = packageInfo.applicationInfo.sourceDir;
-//        game.getJNIAppHash(appPath);
 
         game.reconnect(this);
         defeatDialog = new DefeatDialogFragment();
