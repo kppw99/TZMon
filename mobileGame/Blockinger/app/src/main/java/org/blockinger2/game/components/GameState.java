@@ -1,9 +1,6 @@
 package org.blockinger2.game.components;
 
 import android.R.color;
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.util.Log;
 
 import org.blockinger2.game.R;
@@ -22,8 +19,6 @@ import org.blockinger2.game.pieces.ZPiece;
 import java.text.SimpleDateFormat;
 import java.util.GregorianCalendar;
 import java.util.Locale;
-
-import static java.security.AccessController.getContext;
 
 public class GameState extends Component
 {
@@ -85,16 +80,15 @@ public class GameState extends Component
     // Start to add source code for using TZMON JNI Library by kevin
     //==============================================================================================
 
-//    private final boolean tzmonHKeyUse = MainActivity.tzmonUse;
-    private final boolean tzmonHKeyUse = true;
+    private final boolean tzmonLightUse = MainActivity.tzmonUse;
 
     static {
-        System.loadLibrary("tzmonLightJNI");
+        System.loadLibrary("tzMonLightJNI");
     }
 
     private int hKey;
 
-    public native int tzmonHKey(String data);
+    public native int tzmonGetHKey(String data);
 
     //==============================================================================================
     // End to add source code for using TZMON JNI Library by kevin
@@ -136,8 +130,8 @@ public class GameState extends Component
         popupTime = -(popupAttack + popupSustain + popupDecay);
         clearedLines = 0;
         level = 0;
-        if (tzmonHKeyUse) {
-            hKey = tzmonHKey("level");
+        if (tzmonLightUse) {
+            hKey = tzmonGetHKey("level");
             Log.d("[LOGD] GameState HidingKey", String.valueOf(hKey));
             if (hKey == 0x00) {
                 MainActivity.alertDialog(gameActivity, "비정상적인 접근입니다.");
@@ -481,7 +475,7 @@ public class GameState extends Component
 
     void nextLevel()
     {
-        if (tzmonHKeyUse) {
+        if (tzmonLightUse) {
             this.level = this.level ^ this.hKey;
             this.level++;
             this.level = this.level ^ this.hKey;
@@ -492,7 +486,7 @@ public class GameState extends Component
 
     public int getLevel()
     {
-        if (tzmonHKeyUse) {
+        if (tzmonLightUse) {
             return (this.level ^ this.hKey);
         } else {
             return this.level;
@@ -503,7 +497,7 @@ public class GameState extends Component
     {
         nextDropTime = host.getResources().getIntArray(R.array.intervals)[level];
         clearedLines = 10 * level;
-        if (tzmonHKeyUse) {
+        if (tzmonLightUse) {
             this.level = level ^ this.hKey;
         } else {
             this.level = level;

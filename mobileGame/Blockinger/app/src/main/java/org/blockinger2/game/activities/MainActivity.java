@@ -19,7 +19,6 @@ import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import org.blockinger2.game.R;
 import org.blockinger2.game.components.GameState;
@@ -50,7 +49,9 @@ public class MainActivity extends AppCompatActivity
     public native boolean tzmonSecureUpdate();
     public native boolean tzmonAbusingDetection();
     public native boolean tzmonSyncTimer();
-    public native int tzmonHidingData(String data);
+
+    public native boolean tzmonHidingSetup();
+    public native int tzmonGetHKey(String data);
 
     private int hKey;
 
@@ -87,35 +88,48 @@ public class MainActivity extends AppCompatActivity
         //==========================================================================================
         // Start to add source code for checking app integrity by kevin
         //==========================================================================================
-        boolean res;
         if (tzmonUse) {
+            Boolean res;
+            res = tzmonInitKeyNFlag();
+            Log.d("[LOGD] Init Key and Flag ", String.valueOf(res));
+            if (!res) {
+                alertDialog(this, "tzMon 초기화에 실패하였습니다.");
+            }
+
             res = tzmonCheckAppHash();
             Log.d("[LOGD] App Integrity checking ", String.valueOf(res));
-            if (res == false) {
+            if (!res) {
                 alertDialog(this, "APP 위변조가 탐지되었습니다!");
             }
 
             res = tzmonSecureUpdate();
             Log.d("[LOGD] Secure Update ", String.valueOf(res));
-            if (res == false) {
+            if (!res) {
                 alertDialog(this, "Secure Update에 실패하였습니다.");
             }
 
             res = tzmonAbusingDetection();
             Log.d("[LOGD] Abusing Detection ", String.valueOf(res));
-            if (res == false) {
+            if (!res) {
                 alertDialog(this, "Abusing package가 발견되었습니다.");
             }
 
             res = tzmonSyncTimer();
             Log.d("[LOGD] Sync Timer ", String.valueOf(res));
-            if (res == false) {
+            if (!res) {
                 alertDialog(this, "Timer Sync에 실패하였습니다.");
             }
+
+            res = tzmonHidingSetup();
+            Log.d("[LOGD] Hiding Setup ", String.valueOf(res));
+            if (!res) {
+                alertDialog(this, "Hiding Setup에 실패하였습니다.");
+            }
         } else {
+            Boolean res;
             res = tzmonInitKeyNFlag();
             Log.d("[LOGD] Init Key and Flag ", String.valueOf(res));
-            if (res == false) {
+            if (!res) {
                 alertDialog(this, "tzMon 초기화에 실패하였습니다.");
             }
         }
@@ -155,7 +169,7 @@ public class MainActivity extends AppCompatActivity
 
         // Create Startlevel dialog
         if (tzmonUse) {
-            this.hKey = tzmonHidingData("startLevel");
+            this.hKey = tzmonGetHKey("startLevel");
             if (hKey == 0x00) {
                 alertDialog(this, "잘못된 접근입니다.");
             }

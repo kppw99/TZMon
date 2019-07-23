@@ -64,11 +64,6 @@ static bool tzmonCheckAppIntegrity(char *pre_appHash)
 
     int outLen, iKeyLen, preHashLen, ixorLen, appHashLen, cMsgLen, argLen;
 
-    if (tzmonInit() != true) {
-        LOGD("tzmonInit Error");
-        return false;
-    }
-
     outLen = sizeof(out);
     memset(out, 0x00, outLen);
     strcpy(cmd, "adb shell /vendor/bin/optee_tzmon IKEY 1");
@@ -416,6 +411,71 @@ static bool tzmonTimerSync(JNIEnv *env)
     return true;
 }
 
+static bool tzmonHPreToken()
+{
+    char cmd[1024] = { 0x00, };
+    char out[1024] = { 0x00, };
+    char arg[1024] = { 0x00, };
+
+    unsigned char temp1[32] = { 0x00, };
+    unsigned char temp2[32] = { 0x00, };
+    unsigned char preToken[32] = { 0x00, };
+
+    int outLen, argLen, preTokenLen;
+
+    if (tzmon_xor(iToken, 32, uToken, 32, temp1, 32) != true) {
+        LOGD("tzmon_xor error");
+        return false;
+    }
+    if (tzmon_xor(aToken, 32, tToken, 32, temp2, 32) != true) {
+        LOGD("tzmon_xor error");
+        return false;
+    }
+    if (tzmon_xor(temp1, 32, temp2, 32, preToken, 32) != true) {
+        LOGD("tzmon_xor error");
+        return false;
+    }
+
+    tzmon_itoa((unsigned char *)preToken, 32, arg, &argLen);
+
+    outLen = sizeof(out);
+    memset(out, 0x00, outLen);
+    strcpy(cmd, "adb shell /vendor/bin/optee_tzmon HPRETOKEN ");
+    strcat(cmd, arg);
+    if (_call_tzmonTA(cmd, out, &outLen) != true) {
+        LOGD("_call_tzmonTA error: HPRETOKEN");
+        return false;
+    }
+
+    return true;
+}
+
+static bool tzmonHKey(const char *nativeData, int *retVal)
+{
+    char cmd[1024] = { 0x00, };
+    char out[1024] = { 0x00, };
+
+    unsigned char hKey[32] = { 0x00, };
+
+    int outLen, index, hKeyLen;
+
+    strcpy(cmd, "adb shell /vendor/bin/optee_tzmon HKEY ");
+    strcat(cmd, nativeData);
+    if (_call_tzmonTA(cmd, out, &outLen) != true) {
+        LOGD("_call_tzmonTA error: HKEY");
+        return false;
+    }
+
+    tzmon_atoi(out, outLen, hKey, &hKeyLen);
+    printBuf("hKey", hKey, hKeyLen);
+
+    index = hKey[0] % hKeyLen;
+    *retVal = hKey[index];
+    LOGD("index: %d, hKey: 0x%x", index, *retVal);
+
+    return true;
+}
+
 static bool tzmonHidingData(const char *nativeData, int *retVal)
 {
     char cmd[1024] = { 0x00, };
@@ -557,15 +617,28 @@ JNIEXPORT jboolean JNICALL Java_org_blockinger2_game_activities_MainActivity_tzm
     return (bool)retVal;
 }
 
-JNIEXPORT jint JNICALL Java_org_blockinger2_game_activities_MainActivity_tzmonHidingData
-    (JNIEnv *env, jobject context, jstring data)
+JNIEXPORT jboolean JNICALL Java_org_blockinger2_game_activities_MainActivity_tzmonHidingSetup
+  (JNIEnv *env, jobject context)
+{
+    jboolean retVal = JNI_TRUE;
+
+    if (tzmonHPreToken() != true) {
+        LOGD("tzmonHPreToken error: ");
+        retVal = JNI_FALSE;
+    }
+
+    return (bool)retVal;
+}
+
+JNIEXPORT jint JNICALL Java_org_blockinger2_game_activities_MainActivity_tzmonGetHKey
+  (JNIEnv *env, jobject context, jstring data)
 {
     int retVal = 0x00;
 
     const char *nativeData = env->GetStringUTFChars(data, 0x00);
 
-    if (tzmonHidingData(nativeData, &retVal) != true) {
-        LOGD("tzmonHidingData error");
+    if (tzmonHKey(nativeData, &retVal) != true) {
+        LOGD("tzmonHKey error");
         return retVal;
     }
 
@@ -573,4 +646,3 @@ JNIEXPORT jint JNICALL Java_org_blockinger2_game_activities_MainActivity_tzmonHi
 
     return retVal;
 }
-

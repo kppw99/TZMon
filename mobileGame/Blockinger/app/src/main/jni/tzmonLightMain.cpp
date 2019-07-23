@@ -43,7 +43,7 @@ static bool tzmonHKey(const char *nativeData, int *retVal)
     return true;
 }
 
-JNIEXPORT jint JNICALL Java_org_blockinger2_game_components_GameState_tzmonHKey
+JNIEXPORT jint JNICALL Java_org_blockinger2_game_components_GameState_tzmonGetHKey
     (JNIEnv *env, jobject context, jstring data)
 {
     int retVal = 0x00;

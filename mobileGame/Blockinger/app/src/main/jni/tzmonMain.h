@@ -110,10 +110,18 @@ JNIEXPORT jboolean JNICALL Java_org_blockinger2_game_activities_MainActivity_tzm
 
 /*
  * Class:     org_blockinger2_game_activities_MainActivity
- * Method:    tzmonHidingData
+ * Method:    tzmonHidingSetup
+ * Signature: ()Z
+ */
+JNIEXPORT jboolean JNICALL Java_org_blockinger2_game_activities_MainActivity_tzmonHidingSetup
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     org_blockinger2_game_activities_MainActivity
+ * Method:    tzmonGetHKey
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_org_blockinger2_game_activities_MainActivity_tzmonHidingData
+JNIEXPORT jint JNICALL Java_org_blockinger2_game_activities_MainActivity_tzmonGetHKey
   (JNIEnv *, jobject, jstring);
 
 #ifdef __cplusplus

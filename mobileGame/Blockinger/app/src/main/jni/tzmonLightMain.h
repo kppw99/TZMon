@@ -17,10 +17,10 @@ extern "C" {
 #define org_blockinger2_game_components_GameState_STATE_FINISHED 3L
 /*
  * Class:     org_blockinger2_game_components_GameState
- * Method:    jniHidingKey
- * Signature: ()I
+ * Method:    tzmonGetHKey
+ * Signature: (Ljava/lang/String;)I
  */
-JNIEXPORT jint JNICALL Java_org_blockinger2_game_components_GameState_tzmonHKey
+JNIEXPORT jint JNICALL Java_org_blockinger2_game_components_GameState_tzmonGetHKey
   (JNIEnv *, jobject, jstring);
 
 #ifdef __cplusplus
