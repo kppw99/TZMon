@@ -371,6 +371,138 @@ static TEE_Result _admin_appPreHash_read(SharedMem *sharedMem, uint8_t *outData,
 	return retVal;
 }
 
+static TEE_Result _checkAccessControl(uint32_t flagName)
+{
+	TEE_Result retVal;
+	uint8_t flag[1] = { 0x00, };
+	uint32_t flagLen = sizeof(flag);
+
+	switch (flagName) {
+		case TZMON_IKEY:
+			retVal = TZMON_ReadFile((uint8_t *)IKEY_NAME,
+					(uint32_t)strlen(IKEY_NAME), flag, &flagLen);
+			if (retVal != TEE_ERROR_ITEM_NOT_FOUND) {
+				retVal = TEE_ERROR_ACCESS_DENIED;
+			} else {
+				retVal = TEE_SUCCESS;
+			}
+			break;
+		case TZMON_ITOKEN:
+			retVal = TZMON_ReadFile((uint8_t *)ITOKEN_NAME,
+					(uint32_t)strlen(ITOKEN_NAME), flag, &flagLen);
+			if (retVal != TEE_ERROR_ITEM_NOT_FOUND) {
+				retVal = TEE_ERROR_ACCESS_DENIED;
+			} else {
+				retVal = TEE_SUCCESS;
+			}
+			break;
+		// specially IFLAG is for checking circumvention,
+		// so that return value is opposite value from other case.
+		case TZMON_IFLAG:
+			retVal = TZMON_ReadFile((uint8_t *)IFLAG_NAME,
+					(uint32_t)strlen(IFLAG_NAME), flag, &flagLen);
+			if (retVal != TEE_SUCCESS) {
+				retVal = TEE_ERROR_ACCESS_DENIED;
+			}
+			break;
+		case TZMON_UKEY:
+			retVal = TZMON_ReadFile((uint8_t *)UKEY_NAME,
+					(uint32_t)strlen(UKEY_NAME), flag, &flagLen);
+			if (retVal != TEE_ERROR_ITEM_NOT_FOUND) {
+				retVal = TEE_ERROR_ACCESS_DENIED;
+			} else {
+				retVal = TEE_SUCCESS;
+			}
+			break;
+		case TZMON_UTOKEN:
+			retVal = TZMON_ReadFile((uint8_t *)UTOKEN_NAME,
+					(uint32_t)strlen(UTOKEN_NAME), flag, &flagLen);
+			if (retVal != TEE_ERROR_ITEM_NOT_FOUND) {
+				retVal = TEE_ERROR_ACCESS_DENIED;
+			} else {
+				retVal = TEE_SUCCESS;
+			}
+			break;
+		case TZMON_UFLAG:
+			retVal = TZMON_ReadFile((uint8_t *)UFLAG_NAME,
+					(uint32_t)strlen(UFLAG_NAME), flag, &flagLen);
+			if (retVal != TEE_ERROR_ITEM_NOT_FOUND) {
+				retVal = TEE_ERROR_ACCESS_DENIED;
+			} else {
+				retVal = TEE_SUCCESS;
+			}
+			break;
+		case TZMON_APREFLAG:
+			retVal = TZMON_ReadFile((uint8_t *)APREFLAG_NAME,
+					(uint32_t)strlen(APREFLAG_NAME), flag, &flagLen);
+			if (retVal != TEE_ERROR_ITEM_NOT_FOUND) {
+				retVal = TEE_ERROR_ACCESS_DENIED;
+			} else {
+				retVal = TEE_SUCCESS;
+			}
+			break;
+		case TZMON_ATOKEN:
+			retVal = TZMON_ReadFile((uint8_t *)ATOKEN_NAME,
+					(uint32_t)strlen(ATOKEN_NAME), flag, &flagLen);
+			if (retVal != TEE_ERROR_ITEM_NOT_FOUND) {
+				retVal = TEE_ERROR_ACCESS_DENIED;
+			} else {
+				retVal = TEE_SUCCESS;
+			}
+			break;
+		case TZMON_AFLAG:
+			retVal = TZMON_ReadFile((uint8_t *)AFLAG_NAME,
+					(uint32_t)strlen(AFLAG_NAME), flag, &flagLen);
+			if (retVal != TEE_ERROR_ITEM_NOT_FOUND) {
+				retVal = TEE_ERROR_ACCESS_DENIED;
+			} else {
+				retVal = TEE_SUCCESS;
+			}
+			break;
+		case TZMON_TPREFLAG:
+			retVal = TZMON_ReadFile((uint8_t *)TPREFLAG_NAME,
+					(uint32_t)strlen(TPREFLAG_NAME), flag, &flagLen);
+			if (retVal != TEE_ERROR_ITEM_NOT_FOUND) {
+				retVal = TEE_ERROR_ACCESS_DENIED;
+			} else {
+				retVal = TEE_SUCCESS;
+			}
+			break;
+		case TZMON_TTOKEN:
+			retVal = TZMON_ReadFile((uint8_t *)TTOKEN_NAME,
+					(uint32_t)strlen(TTOKEN_NAME), flag, &flagLen);
+			if (retVal != TEE_ERROR_ITEM_NOT_FOUND) {
+				retVal = TEE_ERROR_ACCESS_DENIED;
+			} else {
+				retVal = TEE_SUCCESS;
+			}
+			break;
+		case TZMON_TFLAG:
+			retVal = TZMON_ReadFile((uint8_t *)TFLAG_NAME,
+					(uint32_t)strlen(TFLAG_NAME), flag, &flagLen);
+			if (retVal != TEE_ERROR_ITEM_NOT_FOUND) {
+				retVal = TEE_ERROR_ACCESS_DENIED;
+			} else {
+				retVal = TEE_SUCCESS;
+			}
+			break;
+		case TZMON_HPREFLAG:
+			retVal = TZMON_ReadFile((uint8_t *)HPREFLAG_NAME,
+					(uint32_t)strlen(HPREFLAG_NAME), flag, &flagLen);
+			if (retVal != TEE_ERROR_ITEM_NOT_FOUND) {
+				retVal = TEE_ERROR_ACCESS_DENIED;
+			} else {
+				retVal = TEE_SUCCESS;
+			}
+			break;
+		default:
+			retVal = TEE_ERROR_BAD_PARAMETERS;
+			break;
+	}
+
+	return retVal;
+}
+
 static TEE_Result _initFlag(SharedMem *sharedMem, uint8_t *outData, uint32_t *outDataLen)
 {
 	if (sharedMem == NULL) return TEE_ERROR_BAD_PARAMETERS;
@@ -382,12 +514,22 @@ static TEE_Result _initFlag(SharedMem *sharedMem, uint8_t *outData, uint32_t *ou
 	*outDataLen = 0x01;
 
 	if (strncmp((const char *)inData, "all", inDataLen) == 0) {
+		TZMON_DeleteFile((uint8_t *)IKEY_NAME, (uint32_t)strlen(IKEY_NAME));
+		TZMON_DeleteFile((uint8_t *)ITOKEN_NAME, (uint32_t)strlen(ITOKEN_NAME));
 		TZMON_DeleteFile((uint8_t *)IFLAG_NAME, (uint32_t)strlen(IFLAG_NAME));
+
+		TZMON_DeleteFile((uint8_t *)UKEY_NAME, (uint32_t)strlen(UKEY_NAME));
+		TZMON_DeleteFile((uint8_t *)UTOKEN_NAME, (uint32_t)strlen(UTOKEN_NAME));
 		TZMON_DeleteFile((uint8_t *)UFLAG_NAME, (uint32_t)strlen(UFLAG_NAME));
-		TZMON_DeleteFile((uint8_t *)AFLAG_NAME, (uint32_t)strlen(AFLAG_NAME));
-		TZMON_DeleteFile((uint8_t *)TFLAG_NAME, (uint32_t)strlen(TFLAG_NAME));
+
 		TZMON_DeleteFile((uint8_t *)APREFLAG_NAME, (uint32_t)strlen(APREFLAG_NAME));
+		TZMON_DeleteFile((uint8_t *)ATOKEN_NAME, (uint32_t)strlen(ATOKEN_NAME));
+		TZMON_DeleteFile((uint8_t *)AFLAG_NAME, (uint32_t)strlen(AFLAG_NAME));
+
 		TZMON_DeleteFile((uint8_t *)TPREFLAG_NAME, (uint32_t)strlen(TPREFLAG_NAME));
+		TZMON_DeleteFile((uint8_t *)TTOKEN_NAME, (uint32_t)strlen(TTOKEN_NAME));
+		TZMON_DeleteFile((uint8_t *)TFLAG_NAME, (uint32_t)strlen(TFLAG_NAME));
+
 		TZMON_DeleteFile((uint8_t *)HPREFLAG_NAME, (uint32_t)strlen(HPREFLAG_NAME));
 	} else if (strncmp((const char *)inData, "iFlag", inDataLen) == 0) {
 		TZMON_DeleteFile((uint8_t *)IFLAG_NAME, (uint32_t)strlen(IFLAG_NAME));
@@ -420,6 +562,9 @@ static TEE_Result _iKey(SharedMem *sharedMem, uint8_t *outData, uint32_t *outDat
 	uint8_t *version = sharedMem->inData;
 	uint32_t versionLen = 32;
 	uint32_t mKeyLen = sizeof(mKey);
+
+	retVal = _checkAccessControl(TZMON_IKEY);
+	CHECK(retVal, "_checkAccessControl", return retVal;);
 
 	retVal = TZMON_Random(salt, sizeof(salt));
 	CHECK(retVal, "TZMON_Random", return retVal;);
@@ -461,6 +606,9 @@ static TEE_Result _iToken(SharedMem *sharedMem, uint8_t *outData, uint32_t *outD
 	uint8_t *inData = sharedMem->inData;
 	uint32_t inDataLen = sharedMem->inDataLen;
 
+	retVal = _checkAccessControl(TZMON_ITOKEN);
+	CHECK(retVal, "_checkAccessControl", return retVal;);
+	
 	retVal = TZMON_ReadFile((uint8_t *)APP_PRE_HASH,
 			(uint32_t)strlen(APP_PRE_HASH), appPreHash, &appPreHashLen);
 	CHECK(retVal, "TZMON_ReadFile", return retVal;);
@@ -560,16 +708,15 @@ static TEE_Result _uKey(SharedMem *sharedMem, uint8_t *outData, uint32_t *outDat
 	uint8_t *inData = sharedMem->inData;
 	uint32_t inDataLen = sharedMem->inDataLen;
 
-	retVal = TZMON_ReadFile((uint8_t *)ITOKEN_NAME,
-			(uint32_t)strlen(ITOKEN_NAME), iToken, &iTokenLen);
-	CHECK(retVal, "TZMON_ReadFile", return retVal;);
+	retVal = _checkAccessControl(TZMON_IFLAG);
+	CHECK(retVal, "_checkAccessControl", return retVal;);
+	
+	retVal = _checkAccessControl(TZMON_UKEY);
+	CHECK(retVal, "_checkAccessControl", return retVal;);
 
-	if (strncmp((const char *)iToken, (const char *)inData, inDataLen) != 0) {
-		*outDataLen = inDataLen;
-		memcpy(outData, inData, inDataLen);
-		return TEE_ERROR_GENERIC;
-	}
-
+	retVal = _checkAccessControl(TZMON_UTOKEN);
+	CHECK(retVal, "_checkAccessControl", return retVal;);
+	
 	retVal = TZMON_ReadFile((uint8_t *)IFLAG_NAME,
 			(uint32_t)strlen(IFLAG_NAME), iFlag, &iFlagLen); 
 	CHECK(retVal, "TZMON_ReadFile", return retVal;);
@@ -577,6 +724,16 @@ static TEE_Result _uKey(SharedMem *sharedMem, uint8_t *outData, uint32_t *outDat
 	if (strncmp((const char *)iFlag, (const char *)flagSet, iFlagLen) != 0) {
 		*outDataLen = iFlagLen;
 		memcpy(outData, iFlag, iFlagLen);
+		return TEE_ERROR_GENERIC;
+	}
+
+	retVal = TZMON_ReadFile((uint8_t *)ITOKEN_NAME,
+			(uint32_t)strlen(ITOKEN_NAME), iToken, &iTokenLen);
+	CHECK(retVal, "TZMON_ReadFile", return retVal;);
+
+	if (strncmp((const char *)iToken, (const char *)inData, inDataLen) != 0) {
+		*outDataLen = inDataLen;
+		memcpy(outData, inData, inDataLen);
 		return TEE_ERROR_GENERIC;
 	}
 
@@ -662,6 +819,12 @@ static TEE_Result _uVerify(SharedMem *sharedMem, uint8_t *outData, uint32_t *out
 	uint32_t uTokenLen = sizeof(uToken);
 	uint32_t uFlagLen = strlen((const char *)uFlag);
 
+	retVal = _checkAccessControl(TZMON_IFLAG);
+	CHECK(retVal, "_checkAccessControl", return retVal;);
+	
+	retVal = _checkAccessControl(TZMON_UFLAG);
+	CHECK(retVal, "_checkAccessControl", return retVal;);
+	
 	retVal = TZMON_ReadFile((uint8_t *)UTOKEN_NAME,
 			(uint32_t)strlen(UTOKEN_NAME), uToken, &uTokenLen);
 	CHECK(retVal, "TZMON_ReadFile", return retVal;);
@@ -713,6 +876,12 @@ static TEE_Result _aPreToken(SharedMem *sharedMem, uint8_t *outData, uint32_t *o
 	uint8_t *inData = sharedMem->inData;
 	uint32_t inDataLen = sharedMem->inDataLen;
 
+	retVal = _checkAccessControl(TZMON_IFLAG);
+	CHECK(retVal, "_checkAccessControl", return retVal;);
+	
+	retVal = _checkAccessControl(TZMON_APREFLAG);
+	CHECK(retVal, "_checkAccessControl", return retVal;);
+	
 	*outDataLen = DATA_SIZE;
 	retVal = TZMON_ReadFile((uint8_t *)ABUSING,
 			(uint32_t)strlen(ABUSING), outData, outDataLen);
@@ -756,6 +925,12 @@ static TEE_Result _aToken(SharedMem *sharedMem, uint8_t *outData, uint32_t *outD
 	uint8_t *inData = sharedMem->inData;
 	uint32_t inDataLen = sharedMem->inDataLen;
 
+	retVal = _checkAccessControl(TZMON_IFLAG);
+	CHECK(retVal, "_checkAccessControl", return retVal;);
+	
+	retVal = _checkAccessControl(TZMON_ATOKEN);
+	CHECK(retVal, "_checkAccessControl", return retVal;);
+	
 	retVal = TZMON_ReadFile((uint8_t *)APREFLAG_NAME,
 			(uint32_t)strlen(APREFLAG_NAME), aPreFlag, &aPreFlagLen);
 	if (retVal != TEE_ERROR_ITEM_NOT_FOUND) {
@@ -770,7 +945,6 @@ static TEE_Result _aToken(SharedMem *sharedMem, uint8_t *outData, uint32_t *outD
 
 	retVal = TZMON_ReadFile((uint8_t *)UTOKEN_NAME,
 			(uint32_t)strlen(UTOKEN_NAME), uToken, &uTokenLen);
-	CHECK(retVal, "TZMON_ReadFile", return retVal;);
 
 	retVal = TZMON_XOR(iToken, iTokenLen, uToken, uTokenLen,
 			preToken, preTokenLen);
@@ -814,6 +988,12 @@ static TEE_Result _aVerify(SharedMem *sharedMem, uint8_t *outData, uint32_t *out
 	uint32_t inDataLen = sharedMem->inDataLen;
 	uint32_t aFlagLen = strlen((const char *)aFlag);
 
+	retVal = _checkAccessControl(TZMON_IFLAG);
+	CHECK(retVal, "_checkAccessControl", return retVal;);
+	
+	retVal = _checkAccessControl(TZMON_AFLAG);
+	CHECK(retVal, "_checkAccessControl", return retVal;);
+	
 	retVal = TZMON_ReadFile((uint8_t *)ATOKEN_NAME,
 			(uint32_t)strlen(ATOKEN_NAME), aToken, &aTokenLen);
 	CHECK(retVal, "TZMON_ReadFile", return retVal;);
@@ -851,6 +1031,12 @@ static TEE_Result _tPreToken(SharedMem *sharedMem, uint8_t *outData, uint32_t *o
 	double tGap = sharedMem->tGap;
 	double millisec = 1000.0;
 
+	retVal = _checkAccessControl(TZMON_IFLAG);
+	CHECK(retVal, "_checkAccessControl", return retVal;);
+	
+	retVal = _checkAccessControl(TZMON_TPREFLAG);
+	CHECK(retVal, "_checkAccessControl", return retVal;);
+	
 	TEE_GetSystemTime(&start);
 	TEE_Wait(DELAY);
 	TEE_GetSystemTime(&end);
@@ -900,6 +1086,12 @@ static TEE_Result _tToken(SharedMem *sharedMem, uint8_t *outData, uint32_t *outD
 	uint8_t *inData = sharedMem->inData;
 	uint32_t inDataLen = sharedMem->inDataLen;
 
+	retVal = _checkAccessControl(TZMON_IFLAG);
+	CHECK(retVal, "_checkAccessControl", return retVal;);
+	
+	retVal = _checkAccessControl(TZMON_TTOKEN);
+	CHECK(retVal, "_checkAccessControl", return retVal;);
+	
 	retVal = TZMON_ReadFile((uint8_t *)TPREFLAG_NAME,
 			(uint32_t)strlen(TPREFLAG_NAME), tPreFlag, &tPreFlagLen);
 	if (retVal != TEE_ERROR_ITEM_NOT_FOUND) {
@@ -914,11 +1106,9 @@ static TEE_Result _tToken(SharedMem *sharedMem, uint8_t *outData, uint32_t *outD
 	
 	retVal = TZMON_ReadFile((uint8_t *)UTOKEN_NAME,
 			(uint32_t)strlen(UTOKEN_NAME), uToken, &uTokenLen);
-	CHECK(retVal, "TZMON_ReadFile", return retVal;);
 
 	retVal = TZMON_ReadFile((uint8_t *)ATOKEN_NAME,
 			(uint32_t)strlen(ATOKEN_NAME), aToken, &aTokenLen);
-	CHECK(retVal, "TZMON_ReadFile", return retVal;);
 
 	retVal = TZMON_XOR(iToken, iTokenLen, uToken, uTokenLen, temp, 32);
 	CHECK(retVal, "TZMON_XOR", return retVal;);
@@ -964,6 +1154,12 @@ static TEE_Result _tVerify(SharedMem *sharedMem, uint8_t *outData, uint32_t *out
 	uint32_t inDataLen = sharedMem->inDataLen;
 	uint32_t tFlagLen = strlen((const char *)tFlag);
 
+	retVal = _checkAccessControl(TZMON_IFLAG);
+	CHECK(retVal, "_checkAccessControl", return retVal;);
+	
+	retVal = _checkAccessControl(TZMON_TFLAG);
+	CHECK(retVal, "_checkAccessControl", return retVal;);
+	
 	retVal = TZMON_ReadFile((uint8_t *)TTOKEN_NAME,
 			(uint32_t)strlen(TTOKEN_NAME), tToken, &tTokenLen);
 	CHECK(retVal, "TZMON_ReadFile", return retVal;);
@@ -1011,21 +1207,24 @@ static TEE_Result _hPreToken(SharedMem *sharedMem, uint8_t *outData, uint32_t *o
 	uint8_t *inData = sharedMem->inData;
 	uint32_t inDataLen = sharedMem->inDataLen;
 
+	retVal = _checkAccessControl(TZMON_IFLAG);
+	CHECK(retVal, "_checkAccessControl", return retVal;);
+
+	retVal = _checkAccessControl(TZMON_HPREFLAG);
+	CHECK(retVal, "_checkAccessControl", return retVal;);
+
 	retVal = TZMON_ReadFile((uint8_t *)ITOKEN_NAME,
 			(uint32_t)strlen(ITOKEN_NAME), iToken, &iTokenLen);
 	CHECK(retVal, "TZMON_ReadFile", return retVal;);
 
 	retVal = TZMON_ReadFile((uint8_t *)UTOKEN_NAME,
 			(uint32_t)strlen(UTOKEN_NAME), uToken, &uTokenLen);
-	CHECK(retVal, "TZMON_ReadFile", return retVal;);
 	
 	retVal = TZMON_ReadFile((uint8_t *)ATOKEN_NAME,
 			(uint32_t)strlen(ATOKEN_NAME), aToken, &aTokenLen);
-	CHECK(retVal, "TZMON_ReadFile", return retVal;);
 	
 	retVal = TZMON_ReadFile((uint8_t *)TTOKEN_NAME,
 			(uint32_t)strlen(TTOKEN_NAME), tToken, &tTokenLen);
-	CHECK(retVal, "TZMON_ReadFile", return retVal;);
 
 	retVal = TZMON_XOR(iToken, iTokenLen, uToken, uTokenLen, temp1, temp1Len);
 	CHECK(retVal, "TZMON_XOR", return retVal;);
@@ -1060,14 +1259,17 @@ static TEE_Result _hKey(SharedMem *sharedMem, uint8_t *outData, uint32_t *outDat
 	uint8_t hPreFlag[1] = { 0x00 };
 	uint32_t hPreFlagLen = sizeof(hPreFlag);
 	
+	retVal = _checkAccessControl(TZMON_IFLAG);
+	CHECK(retVal, "_checkAccessControl", return retVal;);
+	
 	//TODO: retrieve corresponding data from secure storage
 
 	retVal = TZMON_ReadFile((uint8_t *)HPREFLAG_NAME,
 			(uint32_t)strlen(HPREFLAG_NAME), hPreFlag, &hPreFlagLen);
-	CHECK(retVal, "TZMON_ReadFile", return retVal;);
-
-	if (hPreFlag[0] == 0x00) {
-		return TEE_ERROR_GENERIC;
+	if (retVal != TEE_SUCCESS) {
+		outData[0] = 0x00;
+		*outDataLen = 0x01;
+		return retVal;
 	}
 
 	*outDataLen = 32;
