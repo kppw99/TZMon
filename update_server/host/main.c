@@ -16,6 +16,22 @@
 #include "aes.h"
 #include "sha.h"
 
+#define DEBUG_ENABLE	(0)
+
+#if (DEBUG_ENABLE)
+#define ANSI_COLOR "\x1b[32m"
+#define ANSI_COLOR_RESET "\x1b[0m"
+#define DEBUG_PREFIX ANSI_COLOR "[UpdateServer] "
+#define DEBUG_NOPREFIX ANSI_COLOR
+#define LOGD(msg, ...) fprintf(stderr, DEBUG_PREFIX msg "\n" ANSI_COLOR_RESET, \
+##__VA_ARGS__)
+#define LOGN(msg, ...) fprintf(stderr, DEBUG_NOPREFIX msg ANSI_COLOR_RESET, \
+##__VA_ARGS__)
+#else
+#define LOGD(...)
+#define LOGN(...)
+#endif
+
 #define CMD "adb shell /vendor/bin/optee_tzmon"
 
 #if defined(AES256)
@@ -76,14 +92,14 @@ static void printBuf(uint8_t *title, uint8_t *buf, uint32_t bufLen)
 
 	if (bufLen == 0 || title == NULL || buf == NULL)	return;
 
-	printf("[%s]: %d\n", title, bufLen);
+	LOGD("%s(%d)", title, bufLen);
 
 	for (i = 0; i < bufLen; i++) {
-		if (i != 0 && i % 8 == 0)	printf("\n");
-		printf("%02x ", buf[i]);
+		if (i != 0 && i % 8 == 0)	LOGN("\n");
+		LOGN("%02x ", buf[i]);
 	}
 
-	printf("\n");
+	LOGN("\n\n");
 }
 
 static int printServerInfo(char *ifrName, int port)
@@ -91,6 +107,11 @@ static int printServerInfo(char *ifrName, int port)
     int sockfd, retVal = 0;
     struct ifreq ifr;
     char ipstr[40] = { 0x00, };
+
+    if (port < 1000 || port > 10000) {
+        LOGD("[%d]: The port value must be between 1,000 and 10,000.", port);
+        return 1;
+    }
 
     strncpy(ifr.ifr_name, ifrName, IFNAMSIZ);
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -106,11 +127,11 @@ static int printServerInfo(char *ifrName, int port)
     inet_ntop(AF_INET, ifr.ifr_addr.sa_data + 2, ipstr, sizeof(struct sockaddr));
     close(sockfd);
 
-    printf("=========================\n");
-    printf("Server information\n");
-    printf("[ip]    : %s\n", ipstr);
-    printf("[port]  : %d\n", port);
-    printf("=========================\n");
+    LOGD("=========================");
+    LOGD("Server information");
+    LOGD("[ip]    : %s", ipstr);
+    LOGD("[port]  : %d", port);
+    LOGD("=========================\n");
 
     return retVal;
 }
@@ -185,8 +206,8 @@ int main(int argc, char **argv)
     struct sockaddr_in clientaddr, serveraddr;
 
     if (argc != 2) {
-        printf("Usage   : ./server [port]\n");
-        printf("example : ./server 9999\n");
+        LOGD("Usage   : ./server [port]");
+        LOGD("example : ./server 9999");
         exit(0);
     }
 
@@ -194,7 +215,7 @@ int main(int argc, char **argv)
 		printBuf((unsigned char *)"in", plain, 64);
 
 		if (_encAES256(iv, 16, key, 32, plain, 64, out, &outLen) != 0x00) {
-			printf("_encAES256 error: \n");
+			LOGD("_encAES256 error:");
 			exit(0);
 		}
 
@@ -205,7 +226,7 @@ int main(int argc, char **argv)
 		printBuf((unsigned char *)"in", cipher, 64);
 
 		if (_decAES256(iv, 16, key, 32, cipher, 64, out, &outLen) != 0x00) {
-			printf("_encAES256 error: \n");
+			LOGD("_encAES256 error:");
 			exit(0);
 		}
 
@@ -215,7 +236,7 @@ int main(int argc, char **argv)
 	} else if (strcmp(argv[1], "hmac") == 0) {
 		printBuf((unsigned char *)"in", plain, 64);
 		if (_hmacSHA256(key, 32, plain, 64, out, &outLen) != 0x00) {
-			printf("_hmacSHA256 error: \n");
+			LOGD("_hmacSHA256 error:");
 			exit(0);
 		}
 		printBuf((unsigned char *)"hmac", out, outLen);
@@ -224,12 +245,10 @@ int main(int argc, char **argv)
 	}
 
     port = atoi(argv[1]);
-    if (port < 1000 || port > 10000) {
-        printf("[%d]: The port value must be between 1,000 and 10,000.\n", port);
-        exit(0);
-    }
-
-    printServerInfo("wlan0", port);
+    if (printServerInfo("wlan0", port) != 0x00) {
+		LOGD("printServerInfo error:");
+		exit(0);
+	}
 
     // internet 기반의 소켓 생성 (INET)
     if ((server_sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -255,27 +274,27 @@ int main(int argc, char **argv)
         exit(0);
     }
     while(1) {
-        printf("\n[server]: wait for connection\n");
+        LOGD("wait for connection");
 		client_sockfd = accept(server_sockfd, (struct sockaddr *)&clientaddr,
 				(socklen_t *)&client_len);
         if (client_sockfd == -1) {
             perror("[server]: accept error --> ");
             exit(0);
         }
-        printf("[server]: accept %s's request\n", inet_ntoa(clientaddr.sin_addr));
+        LOGD("accept %s's request", inet_ntoa(clientaddr.sin_addr));
 
         while(1) {
 			recvBufLen = sizeof(recvBuf);
             memset(recvBuf, 0x00, recvBufLen);
 			if ((readLen = read(client_sockfd, recvBuf, recvBufLen)) <= 0) {
-                perror("[server]: close connection(Read Error) --> ");
+                perror("[server]: close connection(Read Error)\n");
                 close(client_sockfd);
                 break;
             }
 
             if (strncmp(recvBuf, "quit", strlen("quit")) == 0 ||
                 strncmp(recvBuf, "server_quit", strlen("server_quit")) == 0) {
-                printf("[server]: close connection\n");
+                LOGD("close connection\n");
                 close(client_sockfd);
                 break;
             } else {
@@ -299,12 +318,12 @@ int main(int argc, char **argv)
 					printBuf((unsigned char *)"request update", (unsigned char *)(recvBuf + 2),
 							recvBuf[1]);
 					if (strncmp(recvBuf + 2, (char *)uToken, recvBuf[1]) != 0) {
-						printf("Your uToken is wrong.\n");
+						LOGD("Your uToken is wrong.");
 						memset(sendBuf, 0x00, sizeof(sendBuf));
 						sendBuf[0] = 0x0f;
 						sendBufLen = 0x01;
 					} else {
-						printf("Your uToken is right.\n");
+						LOGD("Your uToken is right.");
 						memset(sendBuf, 0x00, sizeof(sendBuf));
 						printBuf((unsigned char *)"aes key", uKey, 32);
 						printBuf((unsigned char *)"file for aes", file, fileLen);
@@ -323,12 +342,12 @@ int main(int argc, char **argv)
 								sendBufLen += macLen;
 								printBuf((unsigned char *)"hmac", mac, macLen);
 							} else {
-								printf("_hmacSHA256 error: \n");
+								LOGD("_hmacSHA256 error:");
 								sendBuf[0] = 0x0f;
 								sendBufLen = 0x01;
 							}
 						} else {
-							printf("_encAES256 error: \n");
+							LOGD("_encAES256 error:");
 							sendBuf[0] = 0x0f;
 							sendBufLen = 0x01;
 						}
@@ -344,7 +363,7 @@ int main(int argc, char **argv)
         }
     }
 
-    printf("[server]: close server socket\n\n");
+    LOGD("close server socket\n");
     close(server_sockfd);
 
 	return 0;

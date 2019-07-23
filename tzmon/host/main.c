@@ -48,6 +48,22 @@
 
 #include "testInput.h"
 
+#define DEBUG_ENABLE	(1)
+
+#if (DEBUG_ENABLE)
+#define ANSI_COLOR "\x1b[32m"
+#define ANSI_COLOR_RESET "\x1b[0m"
+#define DEBUG_PREFIX ANSI_COLOR "[TZMON_LOGD] "
+#define DEBUG_NOPREFIX ANSI_COLOR
+#define LOGD(msg, ...) fprintf(stderr, DEBUG_PREFIX msg "\n" ANSI_COLOR_RESET, \
+                                ##__VA_ARGS__)
+#define LOGN(msg, ...) fprintf(stderr, DEBUG_NOPREFIX msg ANSI_COLOR_RESET, \
+                                ##__VA_ARGS__)
+#else
+#define LOGD(...)
+#define LOGN(...)
+#endif
+
 #define RESULT	"/vendor/bin/result.txt"
 
 static SharedMem sharedMem;
@@ -58,7 +74,7 @@ static int socketWrite(int sockFD, char *msg, int msgLen)
     int retVal = -1;
 
 	if (msg == NULL || msgLen == 0) {
-		printf("Bad Parameter\n");
+		LOGD("Bad Parameter");
 		return retVal;
 	}
 
@@ -73,7 +89,7 @@ static int socketRead(int sockFD, char *buf, int *bufLen)
     int retVal = -1;
 
     if (buf == NULL || bufLen == NULL) {
-        printf("Bad Parameter\n");
+        LOGD("Bad Parameter");
 		return retVal;
     }
 
@@ -98,7 +114,7 @@ static TEEC_Result _connectServer(uint8_t *in, uint32_t inLen, uint8_t *out, uin
 	int inBufLen;
 
     if (inLen == 0 || in == NULL || out == NULL || outLen == NULL) {
-        printf("Bad Parameter\n");
+        LOGD("Bad Parameter\n");
         return TEEC_ERROR_BAD_PARAMETERS;
     }
 
@@ -108,7 +124,7 @@ static TEEC_Result _connectServer(uint8_t *in, uint32_t inLen, uint8_t *out, uin
     sockAddr.sin_port = htons(port);
 
     if (connect(sockFD, (struct sockaddr *)&sockAddr, sizeof(sockAddr)) < 0) {
-        printf("Connect error: \n");
+        LOGD("Connect error: ");
         return TEEC_ERROR_GENERIC;
     }
 
@@ -117,13 +133,13 @@ static TEEC_Result _connectServer(uint8_t *in, uint32_t inLen, uint8_t *out, uin
 	memcpy(inBuf + 2, in, inLen);
 	inBufLen = inLen + 2;
 	if (socketWrite(sockFD, inBuf, inBufLen) <= 0) {
-		printf("Write error: \n");
+		LOGD("Write error: ");
 		closeSocket(sockFD);
 		return TEEC_ERROR_GENERIC;
 	}
 
 	if (socketRead(sockFD, (char *)out, (int *)outLen) <= 0) {
-		printf("Read error: \n");
+		LOGD("Read error: ");
 		closeSocket(sockFD);
 		return TEEC_ERROR_GENERIC;
 	}
@@ -170,9 +186,6 @@ static void tzmon_atoi(uint8_t *src, uint32_t srcLen,
     }
 }
 
-//tzmon_abusing_write((unsigned char *)argv[2], strlen(argv[2]),
-//		sharedMem.inData, &sharedMem.inDataLen);
-
 static TEEC_Result tzmon_abusing_write(uint8_t *file, uint8_t *out, uint32_t *outLen)
 {
 	FILE *fp = NULL;
@@ -183,7 +196,7 @@ static TEEC_Result tzmon_abusing_write(uint8_t *file, uint8_t *out, uint32_t *ou
 
 	fp = fopen((const char *)file, "r");
 	if (fp == NULL) {
-		printf("fopen error: \n");
+		LOGD("fopen error: \n");
 		return TEEC_ERROR_GENERIC;
 	}
 	
@@ -207,16 +220,16 @@ static void printBuf(uint8_t *title, uint8_t *buf, uint32_t bufLen)
 {
 	uint32_t i;
 
-	if (bufLen == 0 || buf == NULL)	return;
+	if (bufLen == 0 || buf == NULL || title == NULL)	return;
 
-	printf("[%s]:\n", title);
+	LOGD("%s", title);
 
 	for (i = 0; i < bufLen; i++) {
-		if (i != 0 && i % 8 == 0)	printf("\n");
-		printf("%02x ", buf[i]);
+		if (i != 0 && i % 8 == 0)	LOGN("\n");
+		LOGN("%02x ", buf[i]);
 	}
 
-	printf("\n");
+	LOGN("\n\n");
 	
 }
 
@@ -318,11 +331,11 @@ static TEEC_Result _tzmonCmd(char *cmd, uint32_t cmdLen,
 				(cmdLen == strlen("ADMIN_CMD_ABUSING_DELETE"))) {
 		*tzmonCMD = TA_TZMON_ADMIN_CMD_ABUSING_DELETE;
 	} else {
-		printf("There is no tzmonCMD.\n");
+		LOGD("There is no tzmonCMD.");
 		return TEEC_ERROR_BAD_PARAMETERS;
 	}
 
-	printf("tzmonCMD is %s\n", cmd);
+	LOGD("tzmonCMD is %s", cmd);
 
 	return TEEC_SUCCESS;
 }
@@ -332,12 +345,12 @@ static TEEC_Result parseCMD(int argc, char **argv, uint32_t *tzmonCMD)
 	TEEC_Result retVal = TEEC_SUCCESS;
 
 	if (argc < 3) {
-		printf("argument count is less.\n");
+		LOGD("argument count is less.");
 		return TEEC_ERROR_BAD_PARAMETERS;
 	}
 
 	if (argv[1] == NULL || argv[2] == NULL) {
-		printf("argument count is less.\n");
+		LOGD("argument count is less.");
 		return TEEC_ERROR_BAD_PARAMETERS;
 	}
 
@@ -411,7 +424,7 @@ static TEEC_Result parseCMD(int argc, char **argv, uint32_t *tzmonCMD)
 			case TA_TZMON_CMD_INIT_FLAG:
 				sharedMem.inDataLen = strlen(argv[2]);
 				memcpy(sharedMem.inData, argv[2], sharedMem.inDataLen);
-				printf("%s(%d)\n", sharedMem.inData, sharedMem.inDataLen);
+				LOGD("%s(%d)\n", sharedMem.inData, sharedMem.inDataLen);
 				break;
 			case TA_TZMON_CMD_IKEY:
 				sharedMem.inDataLen = strlen(argv[2]);
@@ -545,7 +558,7 @@ int main(int argc, char **argv)
 	 */
 	fp = fopen(RESULT, "w+");
 	if (fp == NULL) {
-		printf("fopen is failed\n");
+		LOGD("fopen is failed");
 		goto exit;
 	}
 
@@ -561,7 +574,7 @@ int main(int argc, char **argv)
 	}
 
 	if (tzmonCMD == TA_TZMON_CMD_TPRETOKEN) {
-		printf("delay: %0.4f\n", sharedMem.tGap);
+		LOGD("delay: %0.4f", sharedMem.tGap);
 	}
 
 	if (res != TEEC_SUCCESS) {
@@ -583,8 +596,7 @@ int main(int argc, char **argv)
 		sprintf(&result[ii * 2], "%02x", (unsigned int)sharedMem.outData[ii]);
 	}
 	resultLen = strlen(result);
-	printf("[TZMon_result]:\n");
-	printf("%s(%d)\n", result, resultLen);
+	LOGD("Result(%d): %s", resultLen / 2, result);
 	fwrite(result, 1, resultLen + 1, fp);
 
 	/*
@@ -603,3 +615,4 @@ exit:
 
 	return 0;
 }
+

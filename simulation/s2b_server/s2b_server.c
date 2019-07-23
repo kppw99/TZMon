@@ -14,11 +14,30 @@
 
 #define CMD	"adb shell /vendor/bin/optee_tzmon"
 
+#ifdef DEBUG
+#define ANSI_COLOR "\x1b[31m"
+#define ANSI_COLOR_RESET "\x1b[0m"
+#define DEBUG_PREFIX ANSI_COLOR "[S2B_LOGD] "
+#define DEBUG_NOPREFIX ANSI_COLOR
+#define LOGD(msg, ...) fprintf(stderr, DEBUG_PREFIX msg "\n" ANSI_COLOR_RESET, \
+								##__VA_ARGS__)
+#define LOGN(msg, ...) fprintf(stderr, DEBUG_PREFIX msg ANSI_COLOR_RESET, \
+								##__VA_ARGS__)
+#else
+#define LOGD(...)
+#define LOGN(...)
+#endif
+
 static int printServerInfo(char *ifrName, int port)
 {
 	int sockfd, retVal = 0;
 	struct ifreq ifr;
 	char ipstr[40] = { 0x00, };
+
+	if (port < 1000 || port > 10000) {
+		LOGD("[%d]: The port value must be between 1,000 and 10,000.", port);
+		return 1;
+	}
 
 	strncpy(ifr.ifr_name, ifrName, IFNAMSIZ);
 	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -34,11 +53,11 @@ static int printServerInfo(char *ifrName, int port)
 	inet_ntop(AF_INET, ifr.ifr_addr.sa_data + 2, ipstr, sizeof(struct sockaddr));
 	close(sockfd);
 	
-	printf("=========================\n");
-	printf("Server information\n");
-	printf("[ip]	: %s\n", ipstr);
-	printf("[port]	: %d\n", port);
-	printf("=========================\n");
+	LOGD("=========================");
+	LOGD("Server information");
+	LOGD("[ip]	: %s", ipstr);
+	LOGD("[port]	: %d", port);
+	LOGD("=========================\n");
 
 	return retVal;
 }
@@ -55,18 +74,16 @@ int main(int argc, char **argv)
     struct sockaddr_in clientaddr, serveraddr;
 
 	if (argc != 2) {
-		printf("Usage	: ./server [port]\n");
-		printf("example	: ./server 9999\n");
+		LOGD("Usage	: ./server [port]");
+		LOGD("example	: ./server 9999");
 		exit(0);
 	}
 
 	port = atoi(argv[1]);
-	if (port < 1000 || port > 10000) {
-		printf("[%d]: The port value must be between 1,000 and 10,000.\n", port);
+	if (printServerInfo("enp3s0", port) != 0x00) {
+		LOGD("printServerInfo error");
 		exit(0);
 	}
-
-	printServerInfo("enp3s0", port);
 
     if ((server_sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         perror("[server]: socket error --> ");
@@ -92,29 +109,29 @@ int main(int argc, char **argv)
 
 	system("adb root");
     while(1) {
-		printf("\n[server]: wait for connection\n");
+		LOGD("[server]: wait for connection");
         client_sockfd = accept(server_sockfd, (struct sockaddr *)&clientaddr, &client_len);
         if (client_sockfd == -1) {
             perror("[server]: accept error --> ");
             exit(0);
         }
-		printf("[server]: accept %s's request\n", inet_ntoa(clientaddr.sin_addr));
+		LOGD("[server]: accept %s's request", inet_ntoa(clientaddr.sin_addr));
 
         while(1) {
             memset(buf, 0x00, sizeof(buf));
             if (read(client_sockfd, buf, bufLen) <= 0) {
-				perror("[server]: close connection(Read Error) --> ");
+				perror("[server]: close connection(Read Error)\n");
                 close(client_sockfd);
                 break;
             }
 
             if (strncmp(buf, "quit", strlen("quit")) == 0 ||
 				strncmp(buf, "server_quit", strlen("server_quit")) == 0) {
-				printf("[server]: close connection\n");
+				LOGD("[server]: close connection\n");
                 close(client_sockfd);
                 break;
 			} else {
-				printf("[cmd]: %s\n", buf);
+				LOGD("Cmd: %s", buf);
 
 				if (strncmp(buf, CMD, strlen(CMD)) == 0) {
 					system(buf);
@@ -124,12 +141,11 @@ int main(int argc, char **argv)
 					fgets(result, sizeof(result), fp);
 					fclose(fp);
 
-					printf("[server_result]:\n");
-					printf("%s(%d)\n", result, (int)strlen(result));
+					LOGD("Result(%d): %s", (int)strlen(result) / 2, result);
 
 					write(client_sockfd, result, strlen(result));
 				} else {
-					printf("This cmd is not excutable!\n");
+					LOGD("This cmd is not excutable!");
 					write(client_sockfd, "fail", strlen("fail"));
 				}
 			}
@@ -140,7 +156,7 @@ int main(int argc, char **argv)
 		}
 	}
 	
-	printf("[server]: close server socket\n\n");
+	LOGD("[server]: close server socket\n");
     close(server_sockfd);
 }
 
