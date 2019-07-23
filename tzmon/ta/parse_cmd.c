@@ -503,6 +503,41 @@ static TEE_Result _checkAccessControl(uint32_t flagName)
 	return retVal;
 }
 
+static TEE_Result _makeToken(uint8_t *token, uint32_t *tokenLen)
+{
+	TEE_Result retVal;
+
+	uint8_t temp1[32] = { 0x00, };
+	uint8_t temp2[32] = { 0x00, };
+
+	uint32_t temp1Len = sizeof(temp1);
+	uint32_t temp2Len = sizeof(temp2);
+	uint32_t iTokenLen = sizeof(iToken);
+	uint32_t uTokenLen = sizeof(uToken);
+	uint32_t aTokenLen = sizeof(aToken);
+	uint32_t tTokenLen = sizeof(tToken);
+	
+	retVal = _checkAccessControl(TZMON_IFLAG);
+	CHECK(retVal, "_checkAccessControl", return retVal;);
+
+	TZMON_ReadFile((uint8_t *)ITOKEN_NAME, (uint32_t)strlen(ITOKEN_NAME), iToken, &iTokenLen);
+	TZMON_ReadFile((uint8_t *)UTOKEN_NAME, (uint32_t)strlen(UTOKEN_NAME), uToken, &uTokenLen);
+	TZMON_ReadFile((uint8_t *)ATOKEN_NAME, (uint32_t)strlen(ATOKEN_NAME), aToken, &aTokenLen);
+	TZMON_ReadFile((uint8_t *)TTOKEN_NAME, (uint32_t)strlen(TTOKEN_NAME), tToken, &tTokenLen);
+
+	retVal = TZMON_XOR(iToken, iTokenLen, uToken, uTokenLen, temp1, temp1Len);
+	CHECK(retVal, "TZMON_XOR", return retVal;);
+
+	retVal = TZMON_XOR(aToken, aTokenLen, tToken, tTokenLen, temp2, temp2Len);
+	CHECK(retVal, "TZMON_XOR", return retVal;);
+	
+	*tokenLen = 32;
+	retVal = TZMON_XOR(temp1, temp1Len, temp2, temp2Len, token, *tokenLen);
+	CHECK(retVal, "TZMON_XOR", return retVal;);
+
+	return retVal;
+}
+
 static TEE_Result _initFlag(SharedMem *sharedMem, uint8_t *outData, uint32_t *outDataLen)
 {
 	if (sharedMem == NULL) return TEE_ERROR_BAD_PARAMETERS;
@@ -917,8 +952,6 @@ static TEE_Result _aToken(SharedMem *sharedMem, uint8_t *outData, uint32_t *outD
 	uint8_t preToken[32] = { 0x00, };
 	
 	uint32_t saltLen = sizeof(salt);
-	uint32_t iTokenLen = sizeof(iToken);
-	uint32_t uTokenLen = sizeof(uToken);
 	uint32_t preTokenLen = sizeof(preToken);
 	uint32_t aPreFlagLen = sizeof(aPreFlag);
 
@@ -939,16 +972,8 @@ static TEE_Result _aToken(SharedMem *sharedMem, uint8_t *outData, uint32_t *outD
 		return TEE_ERROR_GENERIC;
 	}
 
-	retVal = TZMON_ReadFile((uint8_t *)ITOKEN_NAME,
-			(uint32_t)strlen(ITOKEN_NAME), iToken, &iTokenLen);
-	CHECK(retVal, "TZMON_ReadFile", return retVal;);
-
-	retVal = TZMON_ReadFile((uint8_t *)UTOKEN_NAME,
-			(uint32_t)strlen(UTOKEN_NAME), uToken, &uTokenLen);
-
-	retVal = TZMON_XOR(iToken, iTokenLen, uToken, uTokenLen,
-			preToken, preTokenLen);
-	CHECK(retVal, "TZMON_XOR", return retVal;);
+	retVal = _makeToken(preToken, &preTokenLen);
+	CHECK(retVal, "_makeToken", return retVal;);
 
 	if (preTokenLen != inDataLen || 
 			strncmp((const char *)preToken, (const char *)inData, inDataLen) != 0x00) {
@@ -1072,14 +1097,10 @@ static TEE_Result _tToken(SharedMem *sharedMem, uint8_t *outData, uint32_t *outD
 
 	TEE_Result retVal;
 
-	uint8_t temp[32] = { 0x00, };
-	uint8_t preToken[32] = { 0x00, };
 	uint8_t tPreFlag[2] = { 0x00, };
+	uint8_t preToken[32] = { 0x00, };
 
 	uint32_t saltLen = sizeof(salt);
-	uint32_t iTokenLen = sizeof(iToken);
-	uint32_t uTokenLen = sizeof(uToken);
-	uint32_t aTokenLen = sizeof(aToken);
 	uint32_t tPreFlagLen = sizeof(tPreFlag);
 	uint32_t preTokenLen = sizeof(preToken);
 
@@ -1100,21 +1121,8 @@ static TEE_Result _tToken(SharedMem *sharedMem, uint8_t *outData, uint32_t *outD
 		return TEE_ERROR_GENERIC;
 	}
 
-	retVal = TZMON_ReadFile((uint8_t *)ITOKEN_NAME,
-			(uint32_t)strlen(ITOKEN_NAME), iToken, &iTokenLen);
-	CHECK(retVal, "TZMON_ReadFile", return retVal;);
-	
-	retVal = TZMON_ReadFile((uint8_t *)UTOKEN_NAME,
-			(uint32_t)strlen(UTOKEN_NAME), uToken, &uTokenLen);
-
-	retVal = TZMON_ReadFile((uint8_t *)ATOKEN_NAME,
-			(uint32_t)strlen(ATOKEN_NAME), aToken, &aTokenLen);
-
-	retVal = TZMON_XOR(iToken, iTokenLen, uToken, uTokenLen, temp, 32);
-	CHECK(retVal, "TZMON_XOR", return retVal;);
-
-	retVal = TZMON_XOR(temp, 32, aToken, aTokenLen, preToken, preTokenLen);
-	CHECK(retVal, "TZMON_XOR", return retVal;);
+	retVal = _makeToken(preToken, &preTokenLen);
+	CHECK(retVal, "_makeToken", return retVal;);
 
 	if (preTokenLen != inDataLen ||
 			strncmp((const char *)inData, (const char *)preToken, preTokenLen) != 0x00) {
@@ -1190,18 +1198,9 @@ static TEE_Result _hPreToken(SharedMem *sharedMem, uint8_t *outData, uint32_t *o
 	TEE_Result retVal;
 
 	uint8_t hPre[32] = { 0x00, };
-	uint8_t temp1[32] = { 0x00, };
-	uint8_t temp2[32] = { 0x00, };
+	uint8_t hPreFlag[1] = { 0x01 };
 
 	uint32_t hPreLen = sizeof(hPre);
-	uint32_t temp1Len = sizeof(temp1);
-	uint32_t temp2Len = sizeof(temp2);
-	uint32_t iTokenLen = sizeof(iToken);
-	uint32_t uTokenLen = sizeof(uToken);
-	uint32_t aTokenLen = sizeof(aToken);
-	uint32_t tTokenLen = sizeof(tToken);
-
-	uint8_t hPreFlag[1] = { 0x01 };
 	uint32_t hPreFlagLen = sizeof(hPreFlag);
 	
 	uint8_t *inData = sharedMem->inData;
@@ -1213,27 +1212,8 @@ static TEE_Result _hPreToken(SharedMem *sharedMem, uint8_t *outData, uint32_t *o
 	retVal = _checkAccessControl(TZMON_HPREFLAG);
 	CHECK(retVal, "_checkAccessControl", return retVal;);
 
-	retVal = TZMON_ReadFile((uint8_t *)ITOKEN_NAME,
-			(uint32_t)strlen(ITOKEN_NAME), iToken, &iTokenLen);
-	CHECK(retVal, "TZMON_ReadFile", return retVal;);
-
-	retVal = TZMON_ReadFile((uint8_t *)UTOKEN_NAME,
-			(uint32_t)strlen(UTOKEN_NAME), uToken, &uTokenLen);
-	
-	retVal = TZMON_ReadFile((uint8_t *)ATOKEN_NAME,
-			(uint32_t)strlen(ATOKEN_NAME), aToken, &aTokenLen);
-	
-	retVal = TZMON_ReadFile((uint8_t *)TTOKEN_NAME,
-			(uint32_t)strlen(TTOKEN_NAME), tToken, &tTokenLen);
-
-	retVal = TZMON_XOR(iToken, iTokenLen, uToken, uTokenLen, temp1, temp1Len);
-	CHECK(retVal, "TZMON_XOR", return retVal;);
-
-	retVal = TZMON_XOR(aToken, aTokenLen, tToken, tTokenLen, temp2, temp2Len);
-	CHECK(retVal, "TZMON_XOR", return retVal;);
-	
-	retVal = TZMON_XOR(temp1, temp1Len, temp2, temp2Len, hPre, hPreLen);
-	CHECK(retVal, "TZMON_XOR", return retVal;);
+	retVal = _makeToken(hPre, &hPreLen);
+	CHECK(retVal, "_makeToken", return retVal;);
 
 	if (inDataLen != hPreLen ||
 			strncmp((const char *)inData, (const char *)hPre, hPreLen) != 0) {
