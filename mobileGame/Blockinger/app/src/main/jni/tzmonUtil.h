@@ -3,6 +3,22 @@
 
 #include <jni.h>
 
+#define DEBUG_ENABLE   (0)
+
+#if (DEBUG_ENABLE)
+#define LOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, "[LOGV]", __VA_ARGS__)
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG  , "[LOGD]", __VA_ARGS__)
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO   , "[LOGI]", __VA_ARGS__)
+#define LOGW(...) __android_log_print(ANDROID_LOG_WARN   , "[LOGW]", __VA_ARGS__)
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR  , "[LOGE]", __VA_ARGS__)
+#else
+#define LOGV(...)
+#define LOGD(...)
+#define LOGI(...)
+#define LOGW(...)
+#define LOGE(...)
+#endif
+
 void tzmon_itoa(unsigned char *src, int srcLen, char *target, int *targetLen);
 void tzmon_atoi(char *src, int srcLen, unsigned char *dest, int *destLen);
 void printBuf(char *title, unsigned char *data, int dataLen);
