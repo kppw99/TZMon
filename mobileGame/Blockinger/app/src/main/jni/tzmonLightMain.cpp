@@ -11,6 +11,11 @@
 #include "tzmonSocket.h"
 #include "tzmonLightMain.h"
 
+#ifndef SIM_MODE
+#include "optee/tee_client_api.h"
+#include "tzmonTEEC.h"
+#endif
+
 static bool tzmonHKey(const char *nativeData, int *retVal)
 {
     char cmd[1024] = { 0x00, };
@@ -20,6 +25,7 @@ static bool tzmonHKey(const char *nativeData, int *retVal)
 
     int outLen, index, hKeyLen;
 
+#ifdef SIM_MODE
     strcpy(cmd, "adb shell /vendor/bin/optee_tzmon HKEY ");
     strcat(cmd, nativeData);
     if (_call_tzmonTA(cmd, out, &outLen) != true) {
@@ -29,6 +35,16 @@ static bool tzmonHKey(const char *nativeData, int *retVal)
 
     tzmon_atoi(out, outLen, hKey, &hKeyLen);
     printBuf("hKey", hKey, hKeyLen);
+#else
+    if (teec_tzmonTA(TA_TZMON_CMD_HKEY, (unsigned char *)nativeData,
+                    (unsigned char *)out, (uint32_t *)&outLen) != TEEC_SUCCESS) {
+        LOGD("teec_tzmonTA error: HKEY");
+        return false;
+    }
+
+    hKeyLen = outLen;
+    memcpy(hKey, out, hKeyLen);
+#endif
 
     index = hKey[0] % hKeyLen;
     *retVal = hKey[index];

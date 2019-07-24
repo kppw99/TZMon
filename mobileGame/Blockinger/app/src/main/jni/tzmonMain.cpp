@@ -13,6 +13,11 @@
 #include "tzmonSocket.h"
 #include "tzmonUtil.h"
 
+#ifndef SIM_MODE
+#include "optee/tee_client_api.h"
+#include "tzmonTEEC.h"
+#endif
+
 static unsigned char iToken[32] = { 0x00, };
 static unsigned char uToken[32] = { 0x00, };
 static unsigned char aToken[32] = { 0x00, };
@@ -29,6 +34,7 @@ static bool tzmonInit()
 
     int outLen = sizeof(out), resLen = sizeof(res);
 
+#ifdef SIM_MODE
     strcpy(cmd, "adb shell /vendor/bin/optee_tzmon INIT_FLAG all");
     if (_call_tzmonTA(cmd, out, &outLen) != true) {
         LOGD("_call_tzmonTA error: INIT_FLAG");
@@ -36,6 +42,16 @@ static bool tzmonInit()
     }
 
     tzmon_atoi(out, outLen, res, &resLen);
+#else
+    if (teec_tzmonTA(TA_TZMON_CMD_INIT_FLAG, (unsigned char *)"all",
+                    (unsigned char *)out, (uint32_t *)&outLen) != TEEC_SUCCESS) {
+        LOGD("teec_tzmonTA error: INIT_FLAG");
+        return false;
+    }
+
+    resLen = outLen;
+    memcpy(res, out, resLen);
+#endif
 
     if (res[0] != 0x00) {
         return false;
@@ -60,6 +76,8 @@ static bool tzmonCheckAppIntegrity(char *pre_appHash)
 
     outLen = sizeof(out);
     memset(out, 0x00, outLen);
+
+#ifdef SIM_MODE
     strcpy(cmd, "adb shell /vendor/bin/optee_tzmon IKEY 1");
     if (_call_tzmonTA(cmd, out, &outLen) != true) {
         LOGD("_call_tzmonTA error: IKEY");
@@ -69,15 +87,27 @@ static bool tzmonCheckAppIntegrity(char *pre_appHash)
     // iKey
     tzmon_atoi(out, outLen, iKey, &iKeyLen);
     printBuf("iKey", iKey, iKeyLen);
-
-#if 0
-    // preHash
-    tzmon_atoi(pre_appHash, strlen(pre_appHash), preHash, &preHashLen);
 #else
+    if (teec_tzmonTA(TA_TZMON_CMD_IKEY, (unsigned char *)"1",
+                    (unsigned char *)out, (uint32_t *)&outLen) != TEEC_SUCCESS) {
+        LOGD("teec_tzmonTA error: IKEY");
+        return false;
+    }
+
+    // iKey
+    iKeyLen = outLen;
+    memcpy(iKey, out, iKeyLen);
+#endif
+
+    // preHash
+#ifdef USE_FIXAPPHASH
     preHashLen = 32;
     memcpy(preHash, testHash, preHashLen);
-#endif
     printBuf("preHash", preHash, preHashLen);
+#else
+    tzmon_atoi(pre_appHash, strlen(pre_appHash), preHash, &preHashLen);
+    printBuf("preHash", preHash, preHashLen);
+#endif
 
     // preHash XOR iKey
     ixorLen = 32;
@@ -101,6 +131,7 @@ static bool tzmonCheckAppIntegrity(char *pre_appHash)
     memset(arg, 0x00, argLen);
     tzmon_itoa(appHash, appHashLen, arg, &argLen);
 
+#ifdef SIM_MODE
     strcpy(cmd, "adb shell /vendor/bin/optee_tzmon ITOKEN ");
     strcat(cmd, arg);
     if (_call_tzmonTA(cmd, out, &outLen) != true) {
@@ -110,6 +141,16 @@ static bool tzmonCheckAppIntegrity(char *pre_appHash)
 
     tzmon_atoi(out, outLen, iToken, &iTokenLen);
     printBuf("iToken", iToken, iTokenLen);
+#else
+    if (teec_tzmonTA(TA_TZMON_CMD_ITOKEN, (unsigned char *)arg,
+                    (unsigned char *)out, (uint32_t *)&outLen) != TEEC_SUCCESS) {
+        LOGD("teec_tzmonTA error: ITOKEN");
+        return false;
+    }
+
+    iTokenLen = outLen;
+    memcpy(iToken, out, iTokenLen);
+#endif
 
     // cMsg
     tzmon_hmac_sha256(iToken, iTokenLen, resultMsg, 32, cMsg, &cMsgLen);
@@ -121,12 +162,20 @@ static bool tzmonCheckAppIntegrity(char *pre_appHash)
     memset(arg, 0x00, argLen);
     tzmon_itoa(cMsg, cMsgLen, arg, &argLen);
 
+#ifdef SIM_MODE
     strcpy(cmd, "adb shell /vendor/bin/optee_tzmon IVERIFY ");
     strcat(cmd, arg);
     if (_call_tzmonTA(cmd, out, &outLen) != true) {
         LOGD("_call_tzmonTA error: IVERIFY");
         return false;
     }
+#else
+    if (teec_tzmonTA(TA_TZMON_CMD_IVERIFY, (unsigned char *)arg,
+                    (unsigned char *)out, (uint32_t *)&outLen) != TEEC_SUCCESS) {
+        LOGD("teec_tzmonTA error: IVERIFY");
+        return false;
+    }
+#endif
 
     return true;
 }
@@ -146,6 +195,8 @@ static bool tzmonSecureUpdate()
     outLen = sizeof(out);
     memset(out, 0x00, outLen);
     tzmon_itoa(iToken, iTokenLen, arg, &argLen);
+
+#ifdef SIM_MODE
     strcpy(cmd, "adb shell /vendor/bin/optee_tzmon UKEY ");
     strcat(cmd, arg);
     if (_call_tzmonTA(cmd, out, &outLen) != true) {
@@ -156,10 +207,22 @@ static bool tzmonSecureUpdate()
     // uToken
     tzmon_atoi(out, outLen, uToken, &uTokenLen);
     printBuf("uToken", uToken, uTokenLen);
+#else
+    if (teec_tzmonTA(TA_TZMON_CMD_UKEY, (unsigned char *)arg,
+                    (unsigned char *)out, (uint32_t *)&outLen) != TEEC_SUCCESS) {
+        LOGD("teec_tzmonTA error: UKEY");
+        return false;
+    }
+
+    uTokenLen = outLen;
+    memcpy(uToken, out, uTokenLen);
+#endif
 
     outLen = sizeof(out);
     memset(out, 0x00, outLen);
     tzmon_itoa(uToken, uTokenLen, arg, &argLen);
+
+#ifdef SIM_MODE
     strcpy(cmd, "adb shell /vendor/bin/optee_tzmon UTOKEN ");
     strcat(cmd, arg);
     if (_call_tzmonTA(cmd, out, &outLen) != true) {
@@ -169,6 +232,18 @@ static bool tzmonSecureUpdate()
 
     // iVerify
     tzmon_atoi(out, outLen, temp, &tempLen);
+#else
+    if (teec_tzmonTA(TA_TZMON_CMD_UTOKEN, (unsigned char *)arg,
+                    (unsigned char *)out, (uint32_t *)&outLen) != TEEC_SUCCESS) {
+        LOGD("teec_tzmonTA error: UTOKEN");
+        return false;
+    }
+
+    // iVerify
+    tempLen = outLen;
+    memcpy(temp, out, tempLen);
+#endif
+
     memcpy(encFile, temp + 2, tempLen - 2);
     encFileLen = tempLen - 2;
     printBuf("encFile", encFile, encFileLen);
@@ -180,16 +255,25 @@ static bool tzmonSecureUpdate()
     memcpy(temp, encFile, encFileLen);
     memcpy(temp + encFileLen, mac, macLen);
     tempLen = encFileLen + macLen;
-    tzmon_itoa(temp, tempLen, arg, &argLen);
-    strcpy(cmd, "adb shell /vendor/bin/optee_tzmon UVERIFY ");
-    strcat(cmd, arg);
 
     outLen = sizeof(out);
     memset(out, 0x00, outLen);
+    tzmon_itoa(temp, tempLen, arg, &argLen);
+
+#ifdef SIM_MODE
+    strcpy(cmd, "adb shell /vendor/bin/optee_tzmon UVERIFY ");
+    strcat(cmd, arg);
     if (_call_tzmonTA(cmd, out, &outLen) != true) {
         LOGD("_call_tzmonTA error: UVERIFY");
         return false;
     }
+#else
+    if (teec_tzmonTA(TA_TZMON_CMD_UVERIFY, (unsigned char *)arg,
+                    (unsigned char *)out, (uint32_t *)&outLen) != TEEC_SUCCESS) {
+        LOGD("teec_tzmonTA error: UVERIFY");
+        return false;
+    }
+#endif
 
     return true;
 }
@@ -203,6 +287,11 @@ static bool _tzmon_aPreToken(JNIEnv *env, jobject context)
     jstring packageName = NULL;
     const char *appName = NULL;
     jboolean hasNextEvent = JNI_FALSE;
+
+#ifndef SIM_MODE
+    char out[1024] = { 0x00, };
+    int outLen;
+#endif
 
     // curTime = System.currentTimeMillis();
     jclass system = env->FindClass("java/lang/System");
@@ -252,10 +341,20 @@ static bool _tzmon_aPreToken(JNIEnv *env, jobject context)
 
             appName = env->GetStringUTFChars(packageName, NULL);
             LOGD("%dth Event is %s", ++i, appName);
+#ifdef SIM_MODE
             if (_call_tzmonAbusingDetection(appName) != true) {
                 LOGD("_call_tzmonAbusingDetection error: ");
                 return false;
             }
+#else
+            outLen = sizeof(out);
+            memset(out, 0x00, outLen);
+            if (teec_tzmonTA(TA_TZMON_CMD_APRETOKEN, (unsigned char *)appName,
+                            (unsigned char *)out, (uint32_t *)&outLen) != TEEC_SUCCESS) {
+                LOGD("teec_tzmonTA error: APRETOKEN");
+                return false;
+            }
+#endif
             env->ReleaseStringUTFChars(packageName, appName);
         }
 
@@ -294,6 +393,8 @@ static bool tzmonAbusingDetection(JNIEnv *env, jobject context)
     outLen = sizeof(out);
     memset(out, 0x00, outLen);
     tzmon_itoa((unsigned char *)preToken, preTokenLen, arg, &argLen);
+
+#ifdef SIM_MODE
     strcpy(cmd, "adb shell /vendor/bin/optee_tzmon ATOKEN ");
     strcat(cmd, arg);
     if (_call_tzmonTA(cmd, out, &outLen) != true) {
@@ -303,6 +404,16 @@ static bool tzmonAbusingDetection(JNIEnv *env, jobject context)
 
     tzmon_atoi(out, outLen, aToken, &aTokenLen);
     printBuf("aToken", aToken, aTokenLen);
+#else
+    if (teec_tzmonTA(TA_TZMON_CMD_ATOKEN, (unsigned char *)arg,
+                    (unsigned char *)out, (uint32_t *)&outLen) != TEEC_SUCCESS) {
+        LOGD("teec_tzmonTA error: ATOKEN");
+        return false;
+    }
+
+    aTokenLen = outLen;
+    memcpy(aToken, out, aTokenLen);
+#endif
 
     // cMsg
     tzmon_hmac_sha256(aToken, aTokenLen, resultMsg, 32, cMsg, &cMsgLen);
@@ -314,12 +425,20 @@ static bool tzmonAbusingDetection(JNIEnv *env, jobject context)
     memset(arg, 0x00, argLen);
     tzmon_itoa(cMsg, cMsgLen, arg, &argLen);
 
+#ifdef SIM_MODE
     strcpy(cmd, "adb shell /vendor/bin/optee_tzmon AVERIFY ");
     strcat(cmd, arg);
     if (_call_tzmonTA(cmd, out, &outLen) != true) {
         LOGD("_call_tzmonTA error: AVERIFY");
         return false;
     }
+#else
+    if (teec_tzmonTA(TA_TZMON_CMD_AVERIFY, (unsigned char *)arg,
+                    (unsigned char *)out, (uint32_t *)&outLen) != TEEC_SUCCESS) {
+        LOGD("teec_tzmonTA error: AVERIFY");
+        return false;
+    }
+#endif
 
     return true;
 }
@@ -347,12 +466,21 @@ static bool tzmonTimerSync(JNIEnv *env)
         outLen = sizeof(out);
         memset(out, 0x00, outLen);
         memset(cmd, 0x00, sizeof(cmd));
+
+#ifdef SIM_MODE
         strcpy(cmd, "adb shell /vendor/bin/optee_tzmon TPRETOKEN ");
         strcat(cmd, tGap);
         if (_call_tzmonTA(cmd, out, &outLen) != true) {
             LOGD("_call_tzmonTA error: TPRETOKEN");
             return false;
         }
+#else
+        if (teec_tzmonTA(TA_TZMON_CMD_TPRETOKEN, (unsigned char *)tGap,
+                        (unsigned char *)out, (uint32_t *)&outLen) != TEEC_SUCCESS) {
+            LOGD("teec_tzmonTA error: TPRETOKEN");
+            return false;
+        }
+#endif
     }
 
     // tToken
@@ -375,6 +503,8 @@ static bool tzmonTimerSync(JNIEnv *env)
     outLen = sizeof(out);
     memset(out, 0x00, outLen);
     tzmon_itoa((unsigned char *)preToken, preTokenLen, arg, &argLen);
+
+#ifdef SIM_MODE
     strcpy(cmd, "adb shell /vendor/bin/optee_tzmon TTOKEN ");
     strcat(cmd, arg);
     if (_call_tzmonTA(cmd, out, &outLen) != true) {
@@ -384,6 +514,16 @@ static bool tzmonTimerSync(JNIEnv *env)
 
     tzmon_atoi(out, outLen, tToken, &tTokenLen);
     printBuf("tToken", tToken, tTokenLen);
+#else
+    if (teec_tzmonTA(TA_TZMON_CMD_TTOKEN, (unsigned char *)arg,
+                    (unsigned char *)out, (uint32_t *)&outLen) != TEEC_SUCCESS) {
+        LOGD("teec_tzmonTA error: TTOKEN");
+        return false;
+    }
+
+    tTokenLen = outLen;
+    memcpy(tToken, out, tTokenLen);
+#endif
 
     // cMsg
     tzmon_hmac_sha256(tToken, tTokenLen, resultMsg, 32, cMsg, &cMsgLen);
@@ -395,12 +535,20 @@ static bool tzmonTimerSync(JNIEnv *env)
     memset(arg, 0x00, argLen);
     tzmon_itoa(cMsg, cMsgLen, arg, &argLen);
 
+#ifdef SIM_MODE
     strcpy(cmd, "adb shell /vendor/bin/optee_tzmon TVERIFY ");
     strcat(cmd, arg);
     if (_call_tzmonTA(cmd, out, &outLen) != true) {
         LOGD("_call_tzmonTA error: TVERIFY");
         return false;
     }
+#else
+    if (teec_tzmonTA(TA_TZMON_CMD_TVERIFY, (unsigned char *)arg,
+                    (unsigned char *)out, (uint32_t *)&outLen) != TEEC_SUCCESS) {
+        LOGD("teec_tzmonTA error: TVERIFY");
+        return false;
+    }
+#endif
 
     return true;
 }
@@ -430,16 +578,24 @@ static bool tzmonHPreToken()
         return false;
     }
 
-    tzmon_itoa((unsigned char *)preToken, 32, arg, &argLen);
-
     outLen = sizeof(out);
     memset(out, 0x00, outLen);
+    tzmon_itoa((unsigned char *)preToken, 32, arg, &argLen);
+
+#ifdef SIM_MODE
     strcpy(cmd, "adb shell /vendor/bin/optee_tzmon HPRETOKEN ");
     strcat(cmd, arg);
     if (_call_tzmonTA(cmd, out, &outLen) != true) {
         LOGD("_call_tzmonTA error: HPRETOKEN");
         return false;
     }
+#else
+    if (teec_tzmonTA(TA_TZMON_CMD_HPRETOKEN, (unsigned char *)arg,
+                    (unsigned char *)out, (uint32_t *)&outLen) != TEEC_SUCCESS) {
+        LOGD("teec_tzmonTA error: HPRETOKEN");
+        return false;
+    }
+#endif
 
     return true;
 }
@@ -453,6 +609,7 @@ static bool tzmonHKey(const char *nativeData, int *retVal)
 
     int outLen, index, hKeyLen;
 
+#ifdef SIM_MODE
     strcpy(cmd, "adb shell /vendor/bin/optee_tzmon HKEY ");
     strcat(cmd, nativeData);
     if (_call_tzmonTA(cmd, out, &outLen) != true) {
@@ -462,6 +619,16 @@ static bool tzmonHKey(const char *nativeData, int *retVal)
 
     tzmon_atoi(out, outLen, hKey, &hKeyLen);
     printBuf("hKey", hKey, hKeyLen);
+#else
+    if (teec_tzmonTA(TA_TZMON_CMD_HKEY, (unsigned char *)nativeData,
+                    (unsigned char *)out, (uint32_t *)&outLen) != TEEC_SUCCESS) {
+        LOGD("teec_tzmonTA error: HKEY");
+        return false;
+    }
+
+    hKeyLen = outLen;
+    memcpy(hKey, out, hKeyLen);
+#endif
 
     index = hKey[0] % hKeyLen;
     *retVal = hKey[index];
@@ -498,19 +665,29 @@ static bool tzmonHidingData(const char *nativeData, int *retVal)
         return false;
     }
 
-    tzmon_itoa((unsigned char *)preToken, 32, arg, &argLen);
-
     outLen = sizeof(out);
     memset(out, 0x00, outLen);
+    tzmon_itoa((unsigned char *)preToken, 32, arg, &argLen);
+
+#ifdef SIM_MODE
     strcpy(cmd, "adb shell /vendor/bin/optee_tzmon HPRETOKEN ");
     strcat(cmd, arg);
     if (_call_tzmonTA(cmd, out, &outLen) != true) {
         LOGD("_call_tzmonTA error: HPRETOKEN");
         return false;
     }
+#else
+    if (teec_tzmonTA(TA_TZMON_CMD_HPRETOKEN, (unsigned char *)arg,
+                    (unsigned char *)out, (uint32_t *)&outLen) != TEEC_SUCCESS) {
+        LOGD("teec_tzmonTA error: HPRETOKEN");
+        return false;
+    }
+#endif
 
     outLen = sizeof(out);
     memset(out, 0x00, outLen);
+
+#ifdef SIM_MODE
     strcpy(cmd, "adb shell /vendor/bin/optee_tzmon HKEY ");
     strcat(cmd, nativeData);
     if (_call_tzmonTA(cmd, out, &outLen) != true) {
@@ -520,6 +697,16 @@ static bool tzmonHidingData(const char *nativeData, int *retVal)
 
     tzmon_atoi(out, outLen, hKey, &hKeyLen);
     printBuf("hKey", hKey, hKeyLen);
+#else
+    if (teec_tzmonTA(TA_TZMON_CMD_HKEY, (unsigned char *)nativeData,
+                    (unsigned char *)out, (uint32_t *)&outLen) != TEEC_SUCCESS) {
+        LOGD("teec_tzmonTA error: HKEY");
+        return false;
+    }
+
+    hKeyLen = outLen;
+    memcpy(hKey, out, outLen);
+#endif
 
     index = preToken[0] % hKeyLen;
     *retVal = hKey[index];

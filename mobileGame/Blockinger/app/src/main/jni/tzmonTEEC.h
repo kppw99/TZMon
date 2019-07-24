@@ -39,4 +39,6 @@ typedef struct _sharedMem {
     double     tGap;
 }SharedMem;
 
+TEEC_Result teec_tzmonTA(uint32_t tzmonCmd, uint8_t *param, uint8_t *out, uint32_t *outLen);
+
 #endif //BLOCKINGER_TZMONTEEC_H
