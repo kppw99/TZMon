@@ -1,0 +1,76 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
+apply plugin: 'com.android.application'
+
+// Project Structure에서 설정한 NDK 경로를 읽어들여 Return합니다.
+def getNdkBuildPath() {
+    Properties properties = new Properties()
+    properties.load(project.rootProject.file('local.properties').newDataInputStream())
+
+    def command =  properties.getProperty('ndk.dir')
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        command += "\\ndk-build.cmd"
+    } else {
+        command += "/ndk-build"
+    }
+
+    return command
+}
+
+android {
+    compileSdkVersion 15
+    buildToolsVersion "28.0.3"
+
+    defaultConfig {
+        applicationId "com.learn.gamelearn"
+    }
+
+    sourceSets.main {
+        // Compile된 Native Library가 위치하는 경로를 설정합니다.
+        jniLibs.srcDir 'src/main/libs'
+
+        // 여기에 JNI Source 경로를 설정하면 Android Studio에서 기본적으로 지원하는 Native
+        // Library Build가 이루어집니다. 이 경우에 Android.mk와 Application.mk를
+        // 자동으로 생성하기 때문에 편리하지만, 세부 설정이 어렵기 때문에 JNI Source의
+        // 경로를 지정하지 않습니다.
+        jni.srcDirs = []
+    }
+
+    ext {
+        // 아직은 Task 내에서 Build Type을 구분할 방법이 없기 때문에 이 Property를
+        // 이용해 Native Library를 Debugging 가능하도록 Build할 지 결정합니다.
+        nativeDebuggable = true
+    }
+
+    // NDK의 ndk-build 명령을 이용하여 Native Library를 Build하기 위한 Task를 정의합니다.
+    //noinspection GroovyAssignabilityCheck
+    task buildNative(type: Exec, description: 'Compile JNI source via NDK') {
+        if (nativeDebuggable) {
+            commandLine getNdkBuildPath(), 'NDK_DEBUG=1', '-C', file('src/main').absolutePath
+        } else {
+            commandLine getNdkBuildPath(), '-C', file('src/main').absolutePath
+        }
+    }
+
+    // App의 Java Code를 Compile할 때 buildNative Task를 실행하여 Native Library도 같이
+    // Build되도록 설정합니다.
+    tasks.withType(JavaCompile) {
+        compileTask -> compileTask.dependsOn buildNative
+    }
+
+    // NDK로 생성된 Native Library와 Object를 삭제하기 위한 Task를 정의합니다.
+    //noinspection GroovyAssignabilityCheck
+    task cleanNative(type: Exec, description: 'Clean native objs and lib') {
+        commandLine getNdkBuildPath(), '-C', file('src/main').absolutePath, 'clean'
+    }
+
+    // Gradle의 clean Task를 실행할 떄, cleanNative Task를 실행하도록 설정합니다.
+    clean.dependsOn 'cleanNative'
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+    }
+}
