@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LevelPack>
+    <Level>
+        <Monster name="orc" value="1">
+        </Monster>
+    </Level>
+    <Level>
+        <Monster name="orc" value="5">
+        </Monster>
+    </Level>
+    <Level>
+        <Monster name="orc" value="5">
+        </Monster>
+        <Monster name="babyOrc" value="3">
+        </Monster>
+    </Level>
+    <Level>
+        <Monster name="orc" value="6">
+        </Monster>
+        <Monster name="babyOrc" value="6">
+        </Monster>
+    </Level>
+    <Level>
+        <Monster name="orc" value="10">
+        </Monster>
+        <Monster name="highOrc" value="1">
+        </Monster>
+    </Level>
+    <Level>
+        <Monster name="highOrc" value="3">
+        </Monster>
+        <Monster name="babyOrc" value="5">
+        </Monster>
+    </Level>
+    <Level>
+        <Monster name="orc" value="10">
+        </Monster>
+        <Monster name="highOrc" value="5">
+        </Monster>
+        <Monster name="babyOrc" value="5">
+        </Monster>
+    </Level>
+</LevelPack>
