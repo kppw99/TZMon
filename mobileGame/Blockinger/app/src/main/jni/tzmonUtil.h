@@ -2,8 +2,9 @@
 #define BLOCKINGER_TZMONUTIL_H
 
 #include <jni.h>
+#include <android/log.h>    // for android log function
 
-#define DEBUG_ENABLE   (0)
+#define DEBUG_ENABLE   (1)
 
 #if (DEBUG_ENABLE)
 #define LOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, "[LOGV]", __VA_ARGS__)
