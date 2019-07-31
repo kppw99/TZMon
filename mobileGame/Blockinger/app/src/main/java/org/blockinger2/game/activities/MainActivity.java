@@ -88,6 +88,10 @@ public class MainActivity extends AppCompatActivity
         //==========================================================================================
         // Start to add source code for checking app integrity by kevin
         //==========================================================================================
+
+        // After enable just one time to get usage access, never use this function.
+        // startActivityForResult(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS), 1);
+
         if (tzmonUse) {
             Boolean res;
             res = tzmonInitKeyNFlag();
