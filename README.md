@@ -26,7 +26,8 @@ The simulation environments are as like below:
   <uses-permission android:name="android.permission.INTERNET" />
 ```
 - Allowing usage access in the smart-phone or simulator.
-![usage_access](./img/usage_access.png)
+
+<img src="./img/usage_access.png" width="250"></img>
 - Execution update_server and S2B. (for SIM_MODE): update_server and s2b are running on linux machine. Two application must use same port number
 ```
   ./update_server [port_number]
