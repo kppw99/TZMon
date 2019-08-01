@@ -1,0 +1,156 @@
+ECLIPSE ANDROID PROJECT IMPORT SUMMARY
+======================================
+
+Ignored Files:
+--------------
+The following files were *not* copied into the new Gradle project; you
+should evaluate whether these are still needed in your project and if
+so manually move them:
+
+* .gitignore
+* .idea\
+* .idea\encodings.xml
+* .idea\workspace.xml
+* README.md
+* app\
+* app\build.gradle
+* app\src\
+* app\src\main\
+* app\src\main\AndroidManifest.xml
+* app\src\main\assets\
+* app\src\main\assets\fonts\
+* app\src\main\assets\fonts\tahoma.ttf
+* app\src\main\assets\images\
+* app\src\main\assets\images\animation.png
+* app\src\main\assets\images\builddestroybutton.png
+* app\src\main\assets\images\buildonlybutton.png
+* app\src\main\assets\images\destroyonlybutton.png
+* app\src\main\assets\images\heart.png
+* app\src\main\assets\images\heart_black.png
+* app\src\main\assets\images\icon.png
+* app\src\main\assets\images\lol.png
+* app\src\main\assets\images\slot_normal.png
+* app\src\main\assets\images\slot_selected.png
+* app\src\main\assets\images\terrain.png
+* app\src\main\assets\images\vignette_2.png
+* app\src\main\java\
+* app\src\main\java\com\
+* app\src\main\java\com\atlan1\
+* app\src\main\java\com\atlan1\mctpo\
+* app\src\main\java\com\atlan1\mctpo\mobile\
+* app\src\main\java\com\atlan1\mctpo\mobile\API\
+* app\src\main\java\com\atlan1\mctpo\mobile\API\LivingThing.java
+* app\src\main\java\com\atlan1\mctpo\mobile\API\Thing.java
+* app\src\main\java\com\atlan1\mctpo\mobile\API\Widget.java
+* app\src\main\java\com\atlan1\mctpo\mobile\Block.java
+* app\src\main\java\com\atlan1\mctpo\mobile\Character.java
+* app\src\main\java\com\atlan1\mctpo\mobile\DoubleRectangle.java
+* app\src\main\java\com\atlan1\mctpo\mobile\GameActivity.java
+* app\src\main\java\com\atlan1\mctpo\mobile\GameThread.java
+* app\src\main\java\com\atlan1\mctpo\mobile\Graphics\
+* app\src\main\java\com\atlan1\mctpo\mobile\Graphics\Dimension.java
+* app\src\main\java\com\atlan1\mctpo\mobile\Graphics\FlipHelper.java
+* app\src\main\java\com\atlan1\mctpo\mobile\Graphics\Line2d.java
+* app\src\main\java\com\atlan1\mctpo\mobile\Graphics\Line\
+* app\src\main\java\com\atlan1\mctpo\mobile\Graphics\Line\Double.java
+* app\src\main\java\com\atlan1\mctpo\mobile\Graphics\Point.java
+* app\src\main\java\com\atlan1\mctpo\mobile\Graphics\Rectangle.java
+* app\src\main\java\com\atlan1\mctpo\mobile\HUD\
+* app\src\main\java\com\atlan1\mctpo\mobile\HUD\HUD.java
+* app\src\main\java\com\atlan1\mctpo\mobile\HUD\HealthBar.java
+* app\src\main\java\com\atlan1\mctpo\mobile\HUD\InventoryBar.java
+* app\src\main\java\com\atlan1\mctpo\mobile\Inventory\
+* app\src\main\java\com\atlan1\mctpo\mobile\Inventory\Inventory.java
+* app\src\main\java\com\atlan1\mctpo\mobile\Inventory\Slot.java
+* app\src\main\java\com\atlan1\mctpo\mobile\ItemStack.java
+* app\src\main\java\com\atlan1\mctpo\mobile\MCTPO.java
+* app\src\main\java\com\atlan1\mctpo\mobile\MainGamePanel.java
+* app\src\main\java\com\atlan1\mctpo\mobile\Material.java
+* app\src\main\java\com\atlan1\mctpo\mobile\Physics\
+* app\src\main\java\com\atlan1\mctpo\mobile\Physics\AbstractPhysics.java
+* app\src\main\java\com\atlan1\mctpo\mobile\Physics\BlockPhysics\
+* app\src\main\java\com\atlan1\mctpo\mobile\Physics\BlockPhysics\AbstractBlockPhysics.java
+* app\src\main\java\com\atlan1\mctpo\mobile\Physics\BlockPhysics\BlockPhysics.java
+* app\src\main\java\com\atlan1\mctpo\mobile\Physics\BlockPhysics\DamageCollision.java
+* app\src\main\java\com\atlan1\mctpo\mobile\Physics\BlockPhysics\DecayPhysics.java
+* app\src\main\java\com\atlan1\mctpo\mobile\Physics\BlockPhysics\FallPhysics.java
+* app\src\main\java\com\atlan1\mctpo\mobile\Physics\BlockPhysics\FirePhysics.java
+* app\src\main\java\com\atlan1\mctpo\mobile\Physics\BlockPhysics\FlowPhysics.java
+* app\src\main\java\com\atlan1\mctpo\mobile\Physics\BlockPhysics\LavaPhysics.java
+* app\src\main\java\com\atlan1\mctpo\mobile\Physics\BlockPhysics\LeavesPhysics.java
+* app\src\main\java\com\atlan1\mctpo\mobile\Physics\BlockPhysics\SandPhysics.java
+* app\src\main\java\com\atlan1\mctpo\mobile\Physics\BlockPhysics\SpreadPhysics.java
+* app\src\main\java\com\atlan1\mctpo\mobile\Physics\BlockPhysics\WaterPhysics.java
+* app\src\main\java\com\atlan1\mctpo\mobile\Physics\Physics.java
+* app\src\main\java\com\atlan1\mctpo\mobile\Sky.java
+* app\src\main\java\com\atlan1\mctpo\mobile\Texture\
+* app\src\main\java\com\atlan1\mctpo\mobile\Texture\BitmapHelper.java
+* app\src\main\java\com\atlan1\mctpo\mobile\Texture\SpriteImage.java
+* app\src\main\java\com\atlan1\mctpo\mobile\Texture\TextureLoader.java
+* app\src\main\java\com\atlan1\mctpo\mobile\WGen\
+* app\src\main\java\com\atlan1\mctpo\mobile\WGen\MountainGenerator.java
+* app\src\main\java\com\atlan1\mctpo\mobile\WGen\OverlayGenerator.java
+* app\src\main\java\com\atlan1\mctpo\mobile\WGen\RectangleGenerator.java
+* app\src\main\java\com\atlan1\mctpo\mobile\WGen\TreeGenerator.java
+* app\src\main\java\com\atlan1\mctpo\mobile\WGen\WorldGenerator.java
+* app\src\main\java\com\atlan1\mctpo\mobile\WGen\YSectorGenerator.java
+* app\src\main\java\com\atlan1\mctpo\mobile\World.java
+* app\src\main\res\
+* app\src\main\res\drawable-hdpi\
+* app\src\main\res\drawable-hdpi\ic_action_search.png
+* app\src\main\res\drawable-hdpi\ic_launcher.png
+* app\src\main\res\drawable-ldpi\
+* app\src\main\res\drawable-ldpi\ic_launcher.png
+* app\src\main\res\drawable-mdpi\
+* app\src\main\res\drawable-mdpi\ic_action_search.png
+* app\src\main\res\drawable-mdpi\ic_launcher.png
+* app\src\main\res\drawable-xhdpi\
+* app\src\main\res\drawable-xhdpi\ic_action_search.png
+* app\src\main\res\drawable-xhdpi\ic_launcher.png
+* app\src\main\res\layout\
+* app\src\main\res\layout\menu.xml
+* app\src\main\res\menu\
+* app\src\main\res\menu\game.xml
+* app\src\main\res\values-v11\
+* app\src\main\res\values-v11\styles.xml
+* app\src\main\res\values-v14\
+* app\src\main\res\values-v14\styles.xml
+* app\src\main\res\values\
+* app\src\main\res\values\colors.xml
+* app\src\main\res\values\strings.xml
+* app\src\main\res\values\styles.xml
+* build.gradle
+* gradle\
+* gradle\wrapper\
+* gradle\wrapper\gradle-wrapper.jar
+* gradle\wrapper\gradle-wrapper.properties
+* gradlew
+* gradlew.bat
+* ic_launcher-web.png
+* proguard-project.txt
+* settings.gradle
+
+Moved Files:
+------------
+Android Gradle projects use a different directory structure than ADT
+Eclipse projects. Here's how the projects were restructured:
+
+* AndroidManifest.xml => app\src\main\AndroidManifest.xml
+* assets\ => app\src\main\assets\
+* res\ => app\src\main\res\
+* src\ => app\src\main\java\
+
+Next Steps:
+-----------
+You can now build the project. The Gradle project needs network
+connectivity to download dependencies.
+
+Bugs:
+-----
+If for some reason your project does not build, and you determine that
+it is due to a bug or limitation of the Eclipse to Gradle importer,
+please file a bug at http://b.android.com with category
+Component-Tools.
+
+(This import summary is for your information only, and can be deleted
+after import once you are satisfied with the results.)

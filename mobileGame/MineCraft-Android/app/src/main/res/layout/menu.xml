@@ -1,0 +1,44 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="fill_parent"
+    android:background="@color/black_transparent_background">
+    <TextView
+        android:layout_alignParentTop="true"
+        android:id="@+id/world_size_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:textColor="@color/white"
+        android:text="@string/world_size" />
+    <SeekBar 
+        android:layout_below="@id/world_size_text"
+        android:id="@+id/world_size_bar"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:max="40"
+        />
+    <TextView
+        android:id="@+id/inventory_size_text"
+        android:layout_below="@id/world_size_bar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:textColor="@color/white"
+        android:text="@string/inventory_size" />
+    <SeekBar 
+        android:layout_below="@id/inventory_size_text"
+        android:id="@+id/inventory_size_bar"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:max="40"
+        />
+    <Button 
+        android:layout_below="@id/inventory_size_bar"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:text="@string/screenshot"
+        android:onClick="screenshot" />
+
+</RelativeLayout>

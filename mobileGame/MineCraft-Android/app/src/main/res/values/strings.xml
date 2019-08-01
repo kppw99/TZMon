@@ -1,0 +1,11 @@
+<resources>
+
+    <string name="app_name">MCTPO Mobile</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="menu_settings">Settings</string>
+    <string name="title_activity_game">GameActivity</string>
+    <string name="world_size">Select the size of things in the world:</string>
+    <string name="inventory_size">Select the size of the inventory:</string>
+    <string name="screenshot">Screenshot</string>
+
+</resources>
