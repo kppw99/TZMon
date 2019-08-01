@@ -29,7 +29,7 @@ The simulation environments are as like below:
 - Allowing usage access in the smart-phone or simulator.
 
 > <img src="./img/usage_access.png" width="230"></img>
-- Execution update_server and S2B. (for SIM_MODE): update_server and s2b are running on linux machine. Two application must use same port number
+- Execution [update_server](https://github.com/kppw99/tzMon/tree/master/update_server/host) and [S2B](https://github.com/kppw99/tzMon/tree/master/simulation/s2b_server). (for SIM_MODE): update_server and s2b are running on linux machine. Two application must use same port number
 ```
   ./update_server [port_number]
   ./s2b_server [port_number]
