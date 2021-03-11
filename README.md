@@ -1,3 +1,4 @@
+[![DOI](https://zenodo.org/badge/197481937.svg)](https://zenodo.org/badge/latestdoi/197481937)
 # tzMon
 The TZMon is the security framework for a mobile game application.
 
