@@ -107,7 +107,7 @@ include $(BUILD_SHARED_LIBRARY)
 
 ## Publications
 ```
-Jeon, S., & Kim, H. K. (2021). AutoVAS: An Automated Vulnerability Analysis System with a Deep Learning Approach. Computers & Security, 102391.
+Jeon, S., & Kim, H. K. (2021). TZMon: Improving mobile game security with ARM trustzone. Computers & Security, 102391.
 
 @article{jeon2021tzmon,
   title={TZMon: Improving mobile game security with ARM trustzone},
