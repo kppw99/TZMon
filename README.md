@@ -105,6 +105,20 @@ include $(BUILD_SHARED_LIBRARY)
 ```
 9. Copy **TZMon library** source code in the jni directory. Refer to the [link](https://github.com/kppw99/tzMon/tree/master/mobileGame/Blockinger/app/src/main/jni)
 
+## Publications
+```
+Jeon, S., & Kim, H. K. (2021). AutoVAS: An Automated Vulnerability Analysis System with a Deep Learning Approach. Computers & Security, 102391.
+
+@article{jeon2021tzmon,
+  title={TZMon: Improving mobile game security with ARM trustzone},
+  author={Jeon, Sanghoon and Kim, Huy Kang},
+  journal={Computers \& Security},
+  pages={102391},
+  year={2021},
+  publisher={Elsevier}
+}
+```
+
 ## About
 This program is authored and maintained by **Sanghoon Jeon**.
 > Email: kppw99@gmail.com
