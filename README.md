@@ -1,5 +1,5 @@
 [![DOI](https://zenodo.org/badge/197481937.svg)](https://zenodo.org/badge/latestdoi/197481937)
-# tzMon
+# TZMon: Improving mobile game security with ARM trustzone
 The TZMon is the security framework for a mobile game application.
 
 This framework is specially designed for an integrity check, secure update, abusing detection, data hiding, and timer synchronization using **ARM TrustZone**.
